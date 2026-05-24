@@ -28,6 +28,7 @@ This document outlines the architectural plan, user experience flow, and design 
 
 - **Frontend**: Vue 3 (Composition API, `<script setup>`)
 - **Language**: TypeScript
+- **Pagacke Manager**: Bun
 - **Styling**: Modern Vanilla CSS with CSS custom properties (variables)
 - **Icons**: Lucide Icons via `lucide-vue-next`
 - **Build Tool**: Vite
