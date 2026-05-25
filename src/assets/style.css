@@ -696,19 +696,13 @@ button, input, textarea, select {
 
 /* Guidelines for print debugging */
 .show-guidelines::after {
-  content: "A4 Page Limit Boundary";
+  content: "";
   position: absolute;
   top: 1150px;
   left: 0;
   width: 100%;
-  border-bottom: 2px dashed #ef4444;
-  color: #ef4444;
-  text-align: right;
-  font-size: 0.7rem;
-  padding-right: 1rem;
-  font-weight: 700;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.15);
   pointer-events: none;
-  opacity: 0.7;
 }
 
 /* ========================================================
@@ -1119,16 +1113,22 @@ button, input, textarea, select {
   transform: translateY(15px);
 }
 
+@page {
+  size: A4;
+  margin: 0;
+}
+
 /* Print View Formatting Rule Engine */
 @media print {
   /* Hide all dashboard/builder editor interface elements */
   body, html {
     background: #ffffff !important;
     color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
   
   .app-header, 
-  .builder-layout,
   .editor-sidebar,
   .preview-toolbar,
   .modal-overlay,
@@ -1137,10 +1137,18 @@ button, input, textarea, select {
     display: none !important;
   }
 
+  .builder-layout {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
   .preview-pane {
     display: block !important;
     padding: 0 !important;
-    background: #ffffff !important;
+    background: transparent !important;
     overflow: visible !important;
     height: auto !important;
     width: 100% !important;
