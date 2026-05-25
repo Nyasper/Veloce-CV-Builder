@@ -154,6 +154,9 @@ const formatDate = (dateStr: string) => {
         <button class="btn btn-secondary" @click="triggerFileInput">
           <Upload :size="18" /> {{ t.btnImport }}
         </button>
+        <button class="btn btn-secondary" style="border-color: var(--primary); color: var(--primary);" @click="emit('load-demo')">
+          {{ t.emptyBtnDemo }}
+        </button>
         <input 
           type="file" 
           ref="fileInput" 

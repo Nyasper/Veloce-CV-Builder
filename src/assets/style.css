@@ -654,28 +654,40 @@ button, input, textarea, select {
 
 /* Spacing Options */
 .spacing-compact {
-  padding: 1.75rem;
-  gap: 1rem;
+  padding: 1.5rem;
+  gap: 0.75rem;
 }
-.spacing-compact .cv-section { margin-bottom: 0.85rem; }
-.spacing-compact h2 { margin-bottom: 0.35rem; }
+.spacing-compact .cv-section { margin-bottom: 0.6rem; }
+.spacing-compact .cv-item { margin-bottom: 0.55rem !important; }
+.spacing-compact h2 { margin-bottom: 0.25rem; }
 .spacing-compact p, .spacing-compact li { font-size: 0.82rem; }
+.spacing-compact .template-executive .header { padding-bottom: 0.65rem !important; }
+.spacing-compact .template-creative .creative-contact-bar { padding-bottom: 0.5rem !important; margin-bottom: 0 !important; }
+.spacing-compact .template-creative .header-block { padding: 1.2rem !important; }
 
 .spacing-normal {
-  padding: 2.5rem;
-  gap: 1.5rem;
+  padding: 2.25rem;
+  gap: 1.15rem;
 }
-.spacing-normal .cv-section { margin-bottom: 1.25rem; }
-.spacing-normal h2 { margin-bottom: 0.5rem; }
+.spacing-normal .cv-section { margin-bottom: 0.95rem; }
+.spacing-normal .cv-item { margin-bottom: 0.85rem !important; }
+.spacing-normal h2 { margin-bottom: 0.4rem; }
 .spacing-normal p, .spacing-normal li { font-size: 0.9rem; }
+.spacing-normal .template-executive .header { padding-bottom: 0.95rem !important; }
+.spacing-normal .template-creative .creative-contact-bar { padding-bottom: 0.75rem !important; }
+.spacing-normal .template-creative .header-block { padding: 1.6rem !important; }
 
 .spacing-relaxed {
   padding: 3rem;
-  gap: 2rem;
+  gap: 1.75rem;
 }
-.spacing-relaxed .cv-section { margin-bottom: 1.75rem; }
-.spacing-relaxed h2 { margin-bottom: 0.75rem; }
+.spacing-relaxed .cv-section { margin-bottom: 1.45rem; }
+.spacing-relaxed .cv-item { margin-bottom: 1.25rem !important; }
+.spacing-relaxed h2 { margin-bottom: 0.6rem; }
 .spacing-relaxed p, .spacing-relaxed li { font-size: 0.95rem; }
+.spacing-relaxed .template-executive .header { padding-bottom: 1.45rem !important; }
+.spacing-relaxed .template-creative .creative-contact-bar { padding-bottom: 1.2rem !important; }
+.spacing-relaxed .template-creative .header-block { padding: 2.2rem !important; }
 
 /* Font choices applied to resume document */
 .font-outfit { font-family: 'Outfit', sans-serif; }
@@ -1126,6 +1138,17 @@ button, input, textarea, select {
     color: #000000 !important;
     height: auto !important;
     overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .app-container, main {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
   }
   
   .app-header, 
@@ -1143,6 +1166,8 @@ button, input, textarea, select {
     overflow: visible !important;
     background: transparent !important;
     border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .preview-pane {
@@ -1152,6 +1177,7 @@ button, input, textarea, select {
     overflow: visible !important;
     height: auto !important;
     width: 100% !important;
+    margin: 0 !important;
   }
   
   .cv-document {
