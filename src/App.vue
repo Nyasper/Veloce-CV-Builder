@@ -9,12 +9,14 @@ import { Sparkles, Sun, Moon, LayoutDashboard } from 'lucide-vue-next'
 
 const LOCAL_STORAGE_KEY = 'cv_portfolio_builder_cvs'
 const THEME_STORAGE_KEY = 'cv_builder_dark_mode'
+const LANG_STORAGE_KEY = 'cv_builder_language'
 
 // Global Reactive States
 const cvList = ref<CvProject[]>([])
 const activeCvId = ref<string | null>(null)
 const currentTab = ref<'dashboard' | 'editor'>('dashboard')
-const darkMode = ref<boolean>(false)
+const darkMode = ref<boolean>(true) // Dark mode is default
+const appLang = ref<'en' | 'es'>('en') // English is default
 
 // Computed active CV
 const activeCv = computed(() => {
@@ -24,11 +26,20 @@ const activeCv = computed(() => {
 
 // Initialize Application State on Mount
 onMounted(() => {
-  // Load Dark Mode
+  // Load Dark Mode (default is true if not explicitly saved as false)
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
-  if (savedTheme === 'true') {
+  if (savedTheme === 'false') {
+    darkMode.value = false
+    document.body.classList.remove('dark-mode')
+  } else {
     darkMode.value = true
     document.body.classList.add('dark-mode')
+  }
+
+  // Load Language
+  const savedLang = localStorage.getItem(LANG_STORAGE_KEY)
+  if (savedLang === 'en' || savedLang === 'es') {
+    appLang.value = savedLang
   }
 
   // Load CV List
@@ -51,6 +62,11 @@ onMounted(() => {
 watch(cvList, () => {
   saveToStorage()
 }, { deep: true })
+
+// Watch language changes to persist
+watch(appLang, (newLang) => {
+  localStorage.setItem(LANG_STORAGE_KEY, newLang)
+})
 
 const saveToStorage = () => {
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cvList.value))
@@ -189,20 +205,38 @@ const handleExportCvJson = () => {
       </div>
 
       <div class="header-actions">
+        <!-- Sleek Language Switcher Capsule -->
+        <div style="display: flex; background: var(--bg-app); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2px; align-items: center; margin-right: 0.25rem;">
+          <button 
+            style="padding: 0.35rem 0.65rem; font-size: 0.75rem; border-radius: calc(var(--radius-md) - 4px); border: none; cursor: pointer; font-weight: 700; transition: all var(--transition-fast);"
+            :style="appLang === 'es' ? 'background: var(--primary); color: #fff;' : 'background: transparent; color: var(--text-muted);'"
+            @click="appLang = 'es'"
+          >
+            ES
+          </button>
+          <button 
+            style="padding: 0.35rem 0.65rem; font-size: 0.75rem; border-radius: calc(var(--radius-md) - 4px); border: none; cursor: pointer; font-weight: 700; transition: all var(--transition-fast);"
+            :style="appLang === 'en' ? 'background: var(--primary); color: #fff;' : 'background: transparent; color: var(--text-muted);'"
+            @click="appLang = 'en'"
+          >
+            EN
+          </button>
+        </div>
+
         <!-- Return to Dashboard if currently in Builder view -->
         <button 
           v-if="currentTab === 'editor'" 
           class="btn btn-secondary"
           @click="currentTab = 'dashboard'"
         >
-          <LayoutDashboard :size="16" /> Back to Dashboard
+          <LayoutDashboard :size="16" /> {{ appLang === 'es' ? 'Volver al Panel' : 'Back to Dashboard' }}
         </button>
 
         <!-- Light/Dark Mode Switcher -->
         <button 
           class="btn btn-icon" 
           @click="toggleTheme" 
-          :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          :title="darkMode ? (appLang === 'es' ? 'Modo Claro' : 'Switch to Light Mode') : (appLang === 'es' ? 'Modo Oscuro' : 'Switch to Dark Mode')"
         >
           <Sun v-if="darkMode" :size="18" style="color: #f59e0b" />
           <Moon v-else :size="18" style="color: #6366f1" />
@@ -215,6 +249,7 @@ const handleExportCvJson = () => {
       <CvDashboard 
         v-if="currentTab === 'dashboard'"
         :cv-list="cvList"
+        :lang="appLang"
         @select="handleSelectCv"
         @create="handleCreateCv"
         @delete="handleDeleteCv"
@@ -225,9 +260,10 @@ const handleExportCvJson = () => {
       
       <!-- Interactive Split Screen Editor & Preview Panel -->
       <div v-else-if="currentTab === 'editor' && activeCv" class="builder-layout">
-        <CvEditor :cv="activeCv" />
+        <CvEditor :cv="activeCv" :lang="appLang" />
         <CvPreview 
           :cv="activeCv" 
+          :lang="appLang"
           @back="currentTab = 'dashboard'" 
           @export="handleExportCvJson"
         />

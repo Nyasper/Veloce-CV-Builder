@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { CvProject } from '../types'
 import { 
   Mail, 
@@ -14,9 +15,12 @@ import {
   CheckCircle2
 } from 'lucide-vue-next'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   cv: CvProject
-}>()
+  lang?: 'en' | 'es'
+}>(), {
+  lang: 'en'
+})
 
 const emit = defineEmits<{
   (e: 'back'): void
@@ -32,7 +36,7 @@ const getGroupedSkills = () => {
   const groups: Record<string, string[]> = {}
   props.cv.data.skills.forEach(skill => {
     if (!skill.name) return
-    const cat = skill.category || 'General'
+    const cat = skill.category || (props.lang === 'es' ? 'General' : 'General')
     if (!groups[cat]) {
       groups[cat] = []
     }
@@ -40,6 +44,69 @@ const getGroupedSkills = () => {
   })
   return groups
 }
+
+// Bilingual Resume Subtitles & Labels
+const t = computed(() => {
+  if (props.lang === 'es') {
+    return {
+      // Toolbar UI
+      btnDashboard: 'Panel de Control',
+      btnJson: 'Descargar JSON',
+      btnPrint: 'Exportar PDF / Imprimir',
+      autosaved: 'Guardado',
+      
+      // Resume Subheadings
+      profile: 'Perfil Profesional',
+      experience: 'Experiencia Laboral',
+      education: 'Educación y Formación',
+      projects: 'Proyectos Destacados',
+      skills: 'Habilidades',
+      languages: 'Idiomas',
+      
+      // Contact block headers (Creative Template)
+      touch: 'Contacto',
+      locationWeb: 'Ubicación y Web',
+      social: 'Portafolio Social',
+      about: 'Sobre Mí',
+      career: 'Trayectoria Profesional',
+      studies: 'Estudios',
+      capabilities: 'Competencias',
+      featured: 'Proyectos Destacados',
+      
+      // Date helpers
+      present: 'Presente'
+    }
+  } else {
+    return {
+      // Toolbar UI
+      btnDashboard: 'Dashboard',
+      btnJson: 'Download JSON',
+      btnPrint: 'Export PDF / Print',
+      autosaved: 'Autosaved',
+      
+      // Resume Subheadings
+      profile: 'Profile',
+      experience: 'Experience',
+      education: 'Education',
+      projects: 'Projects',
+      skills: 'Skills',
+      languages: 'Languages',
+      
+      // Contact block headers (Creative Template)
+      touch: 'Get in touch',
+      locationWeb: 'Location & Web',
+      social: 'Social Portfolio',
+      about: 'About Me',
+      career: 'Career Path',
+      studies: 'Studies',
+      capabilities: 'Capabilities',
+      featured: 'Featured Projects',
+      
+      // Date helpers
+      present: 'Present'
+    }
+  }
+})
 </script>
 
 <template>
@@ -48,19 +115,19 @@ const getGroupedSkills = () => {
     <div class="preview-toolbar">
       <div style="display: flex; align-items: center; gap: 0.75rem;">
         <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="emit('back')">
-          <ArrowLeft :size="15" /> Dashboard
+          <ArrowLeft :size="15" /> {{ t.btnDashboard }}
         </button>
         <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); display: flex; align-items: center; gap: 0.25rem;">
-          <CheckCircle2 :size="14" style="color: #10b981" /> Autosaved
+          <CheckCircle2 :size="14" style="color: #10b981" /> {{ t.autosaved }}
         </span>
       </div>
       
       <div class="preview-toolbar-actions">
         <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="emit('export')">
-          <Download :size="15" /> Download JSON
+          <Download :size="15" /> {{ t.btnJson }}
         </button>
         <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="printCv">
-          <Printer :size="15" /> Export PDF / Print
+          <Printer :size="15" /> {{ t.btnPrint }}
         </button>
       </div>
     </div>
@@ -118,7 +185,7 @@ const getGroupedSkills = () => {
 
           <!-- Skills grouped in Sidebar -->
           <div v-if="cv.data.skills.length > 0" class="cv-section" style="margin-top: 1rem;">
-            <h2>Skills</h2>
+            <h2>{{ t.skills }}</h2>
             <div v-for="(skills, category) in getGroupedSkills()" :key="category" style="margin-bottom: 0.75rem;">
               <div style="font-size: 0.75rem; font-weight: 700; color: var(--cv-primary); margin-bottom: 0.25rem;">
                 {{ category }}
@@ -136,7 +203,7 @@ const getGroupedSkills = () => {
         <div class="main-content">
           <!-- Summary -->
           <div v-if="cv.data.personalInfo.summary" class="cv-section">
-            <h2>Profile</h2>
+            <h2>{{ t.profile }}</h2>
             <p class="cv-item-description" style="font-size: 0.88rem; line-height: 1.5;">
               {{ cv.data.personalInfo.summary }}
             </p>
@@ -144,12 +211,12 @@ const getGroupedSkills = () => {
 
           <!-- Experience -->
           <div v-if="cv.data.experience.length > 0" class="cv-section">
-            <h2>Experience</h2>
+            <h2>{{ t.experience }}</h2>
             <div v-for="exp in cv.data.experience" :key="exp.id" class="cv-item">
               <div class="cv-item-header">
                 <span>{{ exp.position || 'Position' }}</span>
                 <span style="font-size: 0.8rem; color: var(--cv-text-muted)">
-                  {{ exp.startDate || 'Start' }} — {{ exp.current ? 'Present' : (exp.endDate || 'End') }}
+                  {{ exp.startDate || 'Start' }} — {{ exp.current ? t.present : (exp.endDate || 'End') }}
                 </span>
               </div>
               <div class="cv-item-subheader">
@@ -162,12 +229,12 @@ const getGroupedSkills = () => {
 
           <!-- Education -->
           <div v-if="cv.data.education.length > 0" class="cv-section">
-            <h2>Education</h2>
+            <h2>{{ t.education }}</h2>
             <div v-for="edu in cv.data.education" :key="edu.id" class="cv-item">
               <div class="cv-item-header">
                 <span>{{ edu.degree || 'Degree' }} {{ edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : '' }}</span>
                 <span style="font-size: 0.8rem; color: var(--cv-text-muted)">
-                  {{ edu.startDate || 'Start' }} — {{ edu.current ? 'Present' : (edu.endDate || 'End') }}
+                  {{ edu.startDate || 'Start' }} — {{ edu.current ? t.present : (edu.endDate || 'End') }}
                 </span>
               </div>
               <div class="cv-item-subheader">
@@ -179,7 +246,7 @@ const getGroupedSkills = () => {
 
           <!-- Projects -->
           <div v-if="cv.data.projects.length > 0" class="cv-section">
-            <h2>Projects</h2>
+            <h2>{{ t.projects }}</h2>
             <div v-for="proj in cv.data.projects" :key="proj.id" class="cv-item">
               <div class="cv-item-header">
                 <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
@@ -256,12 +323,12 @@ const getGroupedSkills = () => {
 
         <!-- Experience -->
         <div v-if="cv.data.experience.length > 0" class="cv-section">
-          <h2>Professional Experience</h2>
+          <h2>{{ t.experience }}</h2>
           <div v-for="exp in cv.data.experience" :key="exp.id" class="cv-item">
             <div class="cv-item-header">
               <span>{{ exp.company || 'Company' }}</span>
               <span style="font-size: 0.85rem; color: var(--cv-text-muted)">
-                {{ exp.startDate || 'Start' }} — {{ exp.current ? 'Present' : (exp.endDate || 'End') }}
+                {{ exp.startDate || 'Start' }} — {{ exp.current ? t.present : (exp.endDate || 'End') }}
               </span>
             </div>
             <div class="cv-item-subheader">
@@ -274,12 +341,12 @@ const getGroupedSkills = () => {
 
         <!-- Education -->
         <div v-if="cv.data.education.length > 0" class="cv-section">
-          <h2>Education</h2>
+          <h2>{{ t.education }}</h2>
           <div v-for="edu in cv.data.education" :key="edu.id" class="cv-item">
             <div class="cv-item-header">
               <span>{{ edu.institution || 'Institution' }}</span>
               <span style="font-size: 0.85rem; color: var(--cv-text-muted)">
-                {{ edu.startDate || 'Start' }} — {{ edu.current ? 'Present' : (edu.endDate || 'End') }}
+                {{ edu.startDate || 'Start' }} — {{ edu.current ? t.present : (edu.endDate || 'End') }}
               </span>
             </div>
             <div class="cv-item-subheader">
@@ -291,7 +358,7 @@ const getGroupedSkills = () => {
 
         <!-- Projects -->
         <div v-if="cv.data.projects.length > 0" class="cv-section">
-          <h2>Key Projects</h2>
+          <h2>{{ t.projects }}</h2>
           <div v-for="proj in cv.data.projects" :key="proj.id" class="cv-item">
             <div class="cv-item-header">
               <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
@@ -310,7 +377,7 @@ const getGroupedSkills = () => {
 
         <!-- Skills -->
         <div v-if="cv.data.skills.length > 0" class="cv-section">
-          <h2>Core Competencies</h2>
+          <h2>{{ t.skills }}</h2>
           <div class="skills-list-container">
             <span v-for="skill in cv.data.skills" :key="skill.id" class="executive-skill">
               {{ skill.name }}<span v-if="skill.level" style="color: var(--cv-primary); font-size: 0.75rem; margin-left: 0.25rem;">• {{ skill.level }}</span>
@@ -349,17 +416,17 @@ const getGroupedSkills = () => {
         <!-- Horizontal Quick Contacts -->
         <div class="creative-contact-bar">
           <div class="contact-block" v-if="cv.data.personalInfo.email || cv.data.personalInfo.phone">
-            <div class="contact-block-label">Get in touch</div>
+            <div class="contact-block-label">{{ t.touch }}</div>
             <div>{{ cv.data.personalInfo.email }}</div>
             <div>{{ cv.data.personalInfo.phone }}</div>
           </div>
           <div class="contact-block" v-if="cv.data.personalInfo.location || cv.data.personalInfo.website">
-            <div class="contact-block-label">Location & Web</div>
+            <div class="contact-block-label">{{ t.locationWeb }}</div>
             <div>{{ cv.data.personalInfo.location }}</div>
             <div style="color: var(--cv-primary)">{{ cv.data.personalInfo.website }}</div>
           </div>
           <div class="contact-block" v-if="cv.data.personalInfo.github || cv.data.personalInfo.linkedin">
-            <div class="contact-block-label">Social Portfolio</div>
+            <div class="contact-block-label">{{ t.social }}</div>
             <div>{{ cv.data.personalInfo.github }}</div>
             <div>{{ cv.data.personalInfo.linkedin }}</div>
           </div>
@@ -369,7 +436,7 @@ const getGroupedSkills = () => {
         <div class="sections-grid">
           <!-- Profile/Summary (Full Width in Grid) -->
           <div v-if="cv.data.personalInfo.summary" class="span-full">
-            <h2>About Me</h2>
+            <h2>{{ t.about }}</h2>
             <p class="cv-item-description" style="font-size: 0.9rem; line-height: 1.55;">
               {{ cv.data.personalInfo.summary }}
             </p>
@@ -377,11 +444,11 @@ const getGroupedSkills = () => {
 
           <!-- Left Grid Column: Experience -->
           <div v-if="cv.data.experience.length > 0" style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <h2>Career Path</h2>
+            <h2>{{ t.career }}</h2>
             <div v-for="exp in cv.data.experience" :key="exp.id">
               <div class="cv-item-header">{{ exp.position || 'Position' }}</div>
               <div class="cv-item-meta">
-                {{ exp.company }} | {{ exp.startDate }} — {{ exp.current ? 'Present' : exp.endDate }}
+                {{ exp.company }} | {{ exp.startDate }} — {{ exp.current ? t.present : exp.endDate }}
               </div>
               <p class="cv-item-description" style="white-space: pre-line;">{{ exp.description }}</p>
             </div>
@@ -391,11 +458,11 @@ const getGroupedSkills = () => {
           <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             <!-- Education -->
             <div v-if="cv.data.education.length > 0" style="display: flex; flex-direction: column; gap: 1rem;">
-              <h2>Studies</h2>
+              <h2>{{ t.studies }}</h2>
               <div v-for="edu in cv.data.education" :key="edu.id">
                 <div class="cv-item-header">{{ edu.degree || 'Degree' }}</div>
                 <div class="cv-item-meta">
-                  {{ edu.institution }} | {{ edu.startDate }} — {{ edu.current ? 'Present' : edu.endDate }}
+                  {{ edu.institution }} | {{ edu.startDate }} — {{ edu.current ? t.present : edu.endDate }}
                 </div>
                 <p v-if="edu.description" class="cv-item-description">{{ edu.description }}</p>
               </div>
@@ -403,7 +470,7 @@ const getGroupedSkills = () => {
 
             <!-- Skills -->
             <div v-if="cv.data.skills.length > 0">
-              <h2>Capabilities</h2>
+              <h2>{{ t.capabilities }}</h2>
               <div style="display: flex; flex-wrap: wrap;">
                 <span v-for="skill in cv.data.skills" :key="skill.id" class="skill-badge">
                   {{ skill.name }}<span v-if="skill.level" style="opacity: 0.7; font-size: 0.7rem; font-weight: normal;"> ({{ skill.level }})</span>
@@ -414,7 +481,7 @@ const getGroupedSkills = () => {
 
           <!-- Projects (Full Width in Grid) -->
           <div v-if="cv.data.projects.length > 0" class="span-full" style="margin-top: 0.5rem;">
-            <h2>Featured Projects</h2>
+            <h2>{{ t.featured }}</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
               <div v-for="proj in cv.data.projects" :key="proj.id" style="border: 1px solid var(--cv-border); padding: 1rem; border-radius: var(--radius-sm);">
                 <div class="cv-item-header" style="display: flex; justify-content: space-between; align-items: center;">

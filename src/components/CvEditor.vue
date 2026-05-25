@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { CvProject, Experience, Education, Project, Skill, CustomSection, CustomSectionItem } from '../types'
 import {
   User,
@@ -13,14 +13,18 @@ import {
   ChevronUp,
   Plus,
   Trash2,
-  Eye,
   Settings,
-  Sparkles
+  Sparkles,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-vue-next'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   cv: CvProject
-}>()
+  lang?: 'en' | 'es'
+}>(), {
+  lang: 'en'
+})
 
 const activeSection = ref<string>('personal')
 const activeTab = ref<'content' | 'design'>('content')
@@ -38,6 +42,18 @@ const expandedItems = ref<Record<string, boolean>>({})
 
 const toggleItemExpansion = (itemId: string) => {
   expandedItems.value[itemId] = !expandedItems.value[itemId]
+}
+
+// Reordering helper function: swaps items in place
+const moveItem = (array: any[], index: number, direction: 'up' | 'down') => {
+  const newIndex = direction === 'up' ? index - 1 : index + 1
+  if (newIndex < 0 || newIndex >= array.length) return
+  
+  // Swap elements
+  const temp = array[index]
+  array[index] = array[newIndex]
+  array[newIndex] = temp
+  props.cv.updatedAt = new Date().toISOString()
 }
 
 // Helpers to add list items
@@ -108,7 +124,7 @@ const addSkill = () => {
     id: generateId(),
     name: '',
     level: '',
-    category: 'Skills'
+    category: props.lang === 'es' ? 'Habilidades' : 'Skills'
   }
   props.cv.data.skills.push(newSkill)
   props.cv.updatedAt = new Date().toISOString()
@@ -123,7 +139,7 @@ const addCustomSection = () => {
   const sectionId = generateId()
   const newSection: CustomSection = {
     id: sectionId,
-    title: 'Custom Section',
+    title: props.lang === 'es' ? 'Nueva Sección' : 'New Section',
     items: []
   }
   props.cv.data.customSections.push(newSection)
@@ -153,7 +169,7 @@ const removeCustomSectionItem = (section: CustomSection, index: number) => {
   props.cv.updatedAt = new Date().toISOString()
 }
 
-// Predefined gorgeous HSL color swatches
+// Predefined HSL color swatches
 const themeSwatches = [
   { name: 'Indigo', hue: '250', color: '#6366f1' },
   { name: 'Emerald', hue: '142', color: '#10b981' },
@@ -168,6 +184,179 @@ const themeSwatches = [
 const updateTimestamp = () => {
   props.cv.updatedAt = new Date().toISOString()
 }
+
+// Bilingual UI Dictionary
+const t = computed(() => {
+  if (props.lang === 'es') {
+    return {
+      tabContent: 'Contenido del CV',
+      tabDesign: 'Estilos y Temas',
+      sectLayout: 'Diseño de Plantilla',
+      sectLayoutTitle: 'Escoge la plantilla del CV',
+      optDev: 'Desarrollador Moderno (Badges en Sidebar)',
+      optExec: 'Ejecutivo Elegante (Serif Centrado)',
+      optCreat: 'Creador Minimalista (Banner Asimétrico)',
+      sectFonts: 'Tipografía y Fuentes',
+      fontOutfitDesc: 'Sensación moderna y tecnológica',
+      fontInterDesc: 'Sans geométrica, limpia y premium',
+      fontPlayfairDesc: 'Serif tradicional, gran autoridad',
+      sectColors: 'Colores de la Paleta',
+      accentHue: 'Color de Acento',
+      spacing: 'Espaciado del Documento',
+      spacingComp: 'Densidad Compacta',
+      spacingNorm: 'Equilibrado (Normal)',
+      spacingRel: 'Espaciado Relajado',
+      showA4: 'Mostrar Guía A4',
+      
+      // Form Sections
+      personalInfo: 'Información Personal',
+      fullName: 'Nombre Completo',
+      jobTitle: 'Título Profesional',
+      avatarUrl: 'URL de Imagen de Perfil',
+      email: 'Correo Electrónico',
+      phone: 'Teléfono',
+      location: 'Ubicación / Ciudad',
+      website: 'Sitio Web Personal',
+      github: 'Enlace GitHub',
+      linkedin: 'Enlace LinkedIn',
+      summary: 'Resumen Profesional',
+      summaryPlaceholder: 'Breve resumen de tus logros profesionales...',
+      
+      workExp: 'Experiencia Laboral',
+      expCardTitle: 'Puesto',
+      expCardSub: 'Empresa',
+      company: 'Empresa',
+      locationLabel: 'Ubicación',
+      currentJob: 'Trabajo Actual',
+      startDate: 'Fecha Inicio (AAAA-MM)',
+      endDate: 'Fecha Fin (AAAA-MM)',
+      descLabel: 'Responsabilidades y Logros',
+      btnAddExp: 'Añadir Bloque de Experiencia',
+      
+      education: 'Educación',
+      eduDegree: 'Título / Grado',
+      eduSchool: 'Escuela / Institución',
+      eduField: 'Campo de Estudio',
+      inProgress: 'En Curso',
+      eduDetail: 'Detalles adicionales / honores',
+      btnAddEdu: 'Añadir Bloque de Educación',
+      
+      projects: 'Proyectos Personales',
+      projName: 'Nombre del Proyecto',
+      projUrl: 'Enlace del Proyecto',
+      projTech: 'Tecnologías Utilizadas',
+      projDesc: 'Descripción del Proyecto',
+      btnAddProj: 'Añadir Bloque de Proyecto',
+      
+      skills: 'Habilidades Clave',
+      skillName: 'Nombre de Habilidad',
+      skillLevel: 'Nivel',
+      skillCat: 'Categoría',
+      skillLevelOpt: {
+        none: 'Sin Nivel',
+        expert: 'Experto',
+        inter: 'Intermedio',
+        beg: 'Principiante',
+        fluent: 'Fluido',
+        native: 'Nativo'
+      },
+      btnAddSkill: 'Añadir Habilidad',
+      
+      customSect: 'Sección Personalizada',
+      customItem: 'Elemento',
+      btnAddCustom: 'Añadir Sección (ej. Idiomas, Cursos)',
+      btnAddItemCustom: 'Añadir Elemento a la Sección',
+      customTitle: 'Título de la Sección',
+      customLabel: 'Título del Elemento',
+      customSubtitle: 'Subtítulo del Elemento',
+      customDesc: 'Descripción breve'
+    }
+  } else {
+    return {
+      tabContent: 'CV Content',
+      tabDesign: 'Styles & Themes',
+      sectLayout: 'Resume Template Layout',
+      sectLayoutTitle: 'Template Layout Choice',
+      optDev: 'Modern Developer (Sidebar Badges)',
+      optExec: 'Elegant Executive (Centered Serif)',
+      optCreat: 'Minimalist Creative (Asymmetric Banner)',
+      sectFonts: 'Typography & Fonts',
+      fontOutfitDesc: 'Modern, high tech feel',
+      fontInterDesc: 'Clean, geometric, premium sans',
+      fontPlayfairDesc: 'Traditional, serif, high authority',
+      sectColors: 'Palette Colors',
+      accentHue: 'Theme Hue Accent',
+      spacing: 'Document Spacing',
+      spacingComp: 'Compact Density',
+      spacingNorm: 'Balanced (Normal)',
+      spacingRel: 'Relaxed Spacious',
+      showA4: 'Show A4 Guide',
+      
+      // Form Sections
+      personalInfo: 'Personal Information',
+      fullName: 'Full Name',
+      jobTitle: 'Job Title',
+      avatarUrl: 'Profile Image URL',
+      email: 'Email',
+      phone: 'Phone',
+      location: 'Location',
+      website: 'Personal Website',
+      github: 'GitHub Link',
+      linkedin: 'LinkedIn Link',
+      summary: 'Professional Summary',
+      summaryPlaceholder: 'Brief summary of your career accomplishments...',
+      
+      workExp: 'Work Experience',
+      expCardTitle: 'Position',
+      expCardSub: 'Company',
+      company: 'Company',
+      locationLabel: 'Location',
+      currentJob: 'Current Job',
+      startDate: 'Start Date (YYYY-MM)',
+      endDate: 'End Date (YYYY-MM)',
+      descLabel: 'Responsibilities & Achievements',
+      btnAddExp: 'Add Experience Block',
+      
+      education: 'Education',
+      eduDegree: 'Degree',
+      eduSchool: 'School / Institution',
+      eduField: 'Field of Study',
+      inProgress: 'In Progress',
+      eduDetail: 'Additional details / honors',
+      btnAddEdu: 'Add Education Block',
+      
+      projects: 'Personal Projects',
+      projName: 'Project Name',
+      projUrl: 'Project URL / Link',
+      projTech: 'Technologies Used',
+      projDesc: 'Project Description',
+      btnAddProj: 'Add Project Block',
+      
+      skills: 'Core Skills',
+      skillName: 'Skill Name',
+      skillLevel: 'Level',
+      skillCat: 'Category',
+      skillLevelOpt: {
+        none: 'No Level',
+        expert: 'Expert',
+        inter: 'Intermediate',
+        beg: 'Beginner',
+        fluent: 'Fluent',
+        native: 'Native'
+      },
+      btnAddSkill: 'Add Skill',
+      
+      customSect: 'Custom Section',
+      customItem: 'Item',
+      btnAddCustom: 'Add Custom Section (e.g. Languages)',
+      btnAddItemCustom: 'Add Item to Section',
+      customTitle: 'Section Title',
+      customLabel: 'Item Title',
+      customSubtitle: 'Item Subtitle',
+      customDesc: 'Brief Description'
+    }
+  }
+})
 </script>
 
 <template>
@@ -179,14 +368,14 @@ const updateTimestamp = () => {
         :class="{ active: activeTab === 'content' }"
         @click="activeTab = 'content'"
       >
-        <Sparkles :size="16" /> CV Content
+        <Sparkles :size="16" /> {{ t.tabContent }}
       </button>
       <button 
         class="editor-tab-btn" 
         :class="{ active: activeTab === 'design' }"
         @click="activeTab = 'design'"
       >
-        <Palette :size="16" /> Styles & Themes
+        <Palette :size="16" /> {{ t.tabDesign }}
       </button>
     </div>
 
@@ -198,15 +387,15 @@ const updateTimestamp = () => {
         <!-- Layout Selection -->
         <div class="editor-section-card active-section">
           <div class="editor-section-header">
-            <span class="editor-section-title"><Settings :size="18" /> Resume Template Layout</span>
+            <span class="editor-section-title"><Settings :size="18" /> {{ t.sectLayout }}</span>
           </div>
           <div class="editor-section-content">
             <div class="form-group">
-              <label class="form-label">Template Layout Choice</label>
+              <label class="form-label">{{ t.sectLayoutTitle }}</label>
               <select class="form-select" v-model="cv.design.template" @change="updateTimestamp">
-                <option value="developer">Modern Developer (Sidebar Badges)</option>
-                <option value="executive">Elegant Executive (Centered Serif)</option>
-                <option value="creative">Minimalist Creative (Asymmetric Grid)</option>
+                <option value="developer">{{ t.optDev }}</option>
+                <option value="executive">{{ t.optExec }}</option>
+                <option value="creative">{{ t.optCreat }}</option>
               </select>
             </div>
           </div>
@@ -215,7 +404,7 @@ const updateTimestamp = () => {
         <!-- Typography selector -->
         <div class="editor-section-card active-section">
           <div class="editor-section-header">
-            <span class="editor-section-title"><Palette :size="18" /> Typography & Fonts</span>
+            <span class="editor-section-title"><Palette :size="18" /> {{ t.sectFonts }}</span>
           </div>
           <div class="editor-section-content">
             <div class="form-group" style="gap: 0.75rem;">
@@ -226,7 +415,7 @@ const updateTimestamp = () => {
               >
                 <div>
                   <strong>Outfit</strong>
-                  <div style="font-size: 0.75rem; color: var(--text-muted)">Modern, high tech feel</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted)">{{ t.fontOutfitDesc }}</div>
                 </div>
                 <span style="font-size: 1.25rem;">Aa</span>
               </div>
@@ -237,7 +426,7 @@ const updateTimestamp = () => {
               >
                 <div>
                   <strong>Inter</strong>
-                  <div style="font-size: 0.75rem; color: var(--text-muted)">Clean, geometric, premium sans</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted)">{{ t.fontInterDesc }}</div>
                 </div>
                 <span style="font-size: 1.25rem;">Aa</span>
               </div>
@@ -248,7 +437,7 @@ const updateTimestamp = () => {
               >
                 <div>
                   <strong>Playfair Display</strong>
-                  <div style="font-size: 0.75rem; color: var(--text-muted)">Traditional, serif, high authority</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted)">{{ t.fontPlayfairDesc }}</div>
                 </div>
                 <span style="font-size: 1.25rem; font-family: 'Playfair Display', serif;">Aa</span>
               </div>
@@ -259,11 +448,11 @@ const updateTimestamp = () => {
         <!-- Accent Colors -->
         <div class="editor-section-card active-section">
           <div class="editor-section-header">
-            <span class="editor-section-title"><Palette :size="18" /> Palette Colors</span>
+            <span class="editor-section-title"><Palette :size="18" /> {{ t.sectColors }}</span>
           </div>
           <div class="editor-section-content">
             <div class="form-group">
-              <label class="form-label">Theme Hue Accent</label>
+              <label class="form-label">{{ t.accentHue }}</label>
               <div class="color-picker-group">
                 <div 
                   v-for="swatch in themeSwatches" 
@@ -279,17 +468,17 @@ const updateTimestamp = () => {
             
             <div class="form-group-row" style="margin-top: 0.5rem;">
               <div class="form-group">
-                <label class="form-label">Document Spacing</label>
+                <label class="form-label">{{ t.spacing }}</label>
                 <select class="form-select" v-model="cv.design.spacing" @change="updateTimestamp">
-                  <option value="compact">Compact Density</option>
-                  <option value="normal">Balanced (Normal)</option>
-                  <option value="relaxed">Relaxed Spacious</option>
+                  <option value="compact">{{ t.spacingComp }}</option>
+                  <option value="normal">{{ t.spacingNorm }}</option>
+                  <option value="relaxed">{{ t.spacingRel }}</option>
                 </select>
               </div>
               <div class="form-group" style="justify-content: flex-end;">
-                <label class="form-label" style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                <label class="form-label" style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-top: auto; margin-bottom: 0.65rem;">
                   <input type="checkbox" v-model="cv.design.showA4Guidelines" />
-                  Show A4 Guide
+                  {{ t.showA4 }}
                 </label>
               </div>
             </div>
@@ -303,58 +492,58 @@ const updateTimestamp = () => {
         <!-- Personal Information Section -->
         <div class="editor-section-card" :class="{ 'active-section': activeSection === 'personal' }">
           <div class="editor-section-header" @click="toggleSection('personal')">
-            <span class="editor-section-title"><User :size="18" /> Personal Information</span>
+            <span class="editor-section-title"><User :size="18" /> {{ t.personalInfo }}</span>
             <ChevronDown v-if="activeSection !== 'personal'" :size="16" />
             <ChevronUp v-else :size="16" />
           </div>
           <div v-if="activeSection === 'personal'" class="editor-section-content">
             <div class="form-group">
-              <label class="form-label">Full Name</label>
+              <label class="form-label">{{ t.fullName }}</label>
               <input type="text" class="form-input" v-model="cv.data.personalInfo.fullName" @input="updateTimestamp" placeholder="Jane Doe" />
             </div>
             <div class="form-group-row">
               <div class="form-group">
-                <label class="form-label">Job Title</label>
+                <label class="form-label">{{ t.jobTitle }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.title" @input="updateTimestamp" placeholder="Senior Product Manager" />
               </div>
               <div class="form-group">
-                <label class="form-label">Profile Image URL</label>
+                <label class="form-label">{{ t.avatarUrl }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.avatarUrl" @input="updateTimestamp" placeholder="https://unsplash.com/..." />
               </div>
             </div>
             <div class="form-group-row">
               <div class="form-group">
-                <label class="form-label">Email</label>
+                <label class="form-label">{{ t.email }}</label>
                 <input type="email" class="form-input" v-model="cv.data.personalInfo.email" @input="updateTimestamp" placeholder="jane@example.com" />
               </div>
               <div class="form-group">
-                <label class="form-label">Phone</label>
+                <label class="form-label">{{ t.phone }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.phone" @input="updateTimestamp" placeholder="+1 (555) 123-4567" />
               </div>
             </div>
             <div class="form-group-row">
               <div class="form-group">
-                <label class="form-label">Location</label>
+                <label class="form-label">{{ t.location }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.location" @input="updateTimestamp" placeholder="Austin, TX" />
               </div>
               <div class="form-group">
-                <label class="form-label">Personal Website</label>
+                <label class="form-label">{{ t.website }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.website" @input="updateTimestamp" placeholder="janedoe.com" />
               </div>
             </div>
             <div class="form-group-row">
               <div class="form-group">
-                <label class="form-label">GitHub Link</label>
+                <label class="form-label">{{ t.github }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.github" @input="updateTimestamp" placeholder="github.com/jane" />
               </div>
               <div class="form-group">
-                <label class="form-label">LinkedIn Link</label>
+                <label class="form-label">{{ t.linkedin }}</label>
                 <input type="text" class="form-input" v-model="cv.data.personalInfo.linkedin" @input="updateTimestamp" placeholder="linkedin.com/in/jane" />
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">Professional Summary</label>
-              <textarea class="form-textarea" v-model="cv.data.personalInfo.summary" @input="updateTimestamp" placeholder="Brief summary of your career accomplishments..."></textarea>
+              <label class="form-label">{{ t.summary }}</label>
+              <textarea class="form-textarea" v-model="cv.data.personalInfo.summary" @input="updateTimestamp" :placeholder="t.summaryPlaceholder"></textarea>
             </div>
           </div>
         </div>
@@ -362,7 +551,7 @@ const updateTimestamp = () => {
         <!-- Work Experience Section -->
         <div class="editor-section-card" :class="{ 'active-section': activeSection === 'experience' }">
           <div class="editor-section-header" @click="toggleSection('experience')">
-            <span class="editor-section-title"><Briefcase :size="18" /> Work Experience ({{ cv.data.experience.length }})</span>
+            <span class="editor-section-title"><Briefcase :size="18" /> {{ t.workExp }} ({{ cv.data.experience.length }})</span>
             <ChevronDown v-if="activeSection !== 'experience'" :size="16" />
             <ChevronUp v-else :size="16" />
           </div>
@@ -370,53 +559,74 @@ const updateTimestamp = () => {
             <transition-group name="list" tag="div">
               <div v-for="(exp, index) in cv.data.experience" :key="exp.id" class="list-item-card">
                 <div class="list-item-header" @click="toggleItemExpansion(exp.id)">
-                  <div class="list-item-header-info">
-                    <span class="list-item-title">{{ exp.position || 'Position' }}</span>
-                    <span class="list-item-subtitle">{{ exp.company || 'Company' }} {{ exp.startDate ? `(${exp.startDate})` : '' }}</span>
+                  <div class="list-item-header-info" style="max-width: 60%">
+                    <span class="list-item-title">{{ exp.position || t.expCardTitle }}</span>
+                    <span class="list-item-subtitle">{{ exp.company || t.expCardSub }} {{ exp.startDate ? `(${exp.startDate})` : '' }}</span>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 2px;">
+                    <!-- Move Up Button -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="index === 0"
+                      :title="props.lang === 'es' ? 'Mover Arriba' : 'Move Up'" 
+                      @click.stop="moveItem(cv.data.experience, index, 'up')"
+                    >
+                      <ArrowUp :size="14" />
+                    </button>
+                    <!-- Move Down Button -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="index === cv.data.experience.length - 1"
+                      :title="props.lang === 'es' ? 'Mover Abajo' : 'Move Down'" 
+                      @click.stop="moveItem(cv.data.experience, index, 'down')"
+                    >
+                      <ArrowDown :size="14" />
+                    </button>
+                    <!-- Delete Button -->
                     <button class="btn-icon" style="width: 28px; height: 28px; border: none; background: transparent; color: #ef4444;" title="Delete" @click.stop="removeExperience(index)">
                       <Trash2 :size="14" />
                     </button>
-                    <ChevronDown v-if="!expandedItems[exp.id]" :size="14" />
-                    <ChevronUp v-else :size="14" />
+                    <ChevronDown v-if="!expandedItems[exp.id]" :size="14" style="margin-left: 0.25rem;" />
+                    <ChevronUp v-else :size="14" style="margin-left: 0.25rem;" />
                   </div>
                 </div>
                 
                 <div v-if="expandedItems[exp.id]" class="list-item-content">
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Company</label>
+                      <label class="form-label">{{ t.company }}</label>
                       <input type="text" class="form-input" v-model="exp.company" @input="updateTimestamp" placeholder="Google" />
                     </div>
                     <div class="form-group">
-                      <label class="form-label">Job Title</label>
+                      <label class="form-label">{{ t.jobTitle }}</label>
                       <input type="text" class="form-input" v-model="exp.position" @input="updateTimestamp" placeholder="Software Engineer" />
                     </div>
                   </div>
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Location</label>
+                      <label class="form-label">{{ t.locationLabel }}</label>
                       <input type="text" class="form-input" v-model="exp.location" @input="updateTimestamp" placeholder="Mountain View, CA" />
                     </div>
                     <div class="form-group" style="flex-direction: row; align-items: flex-end; gap: 0.5rem;">
                       <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-bottom: 0.65rem; font-size: 0.85rem;">
-                        <input type="checkbox" v-model="exp.current" @change="updateTimestamp" /> Current Job
+                        <input type="checkbox" v-model="exp.current" @change="updateTimestamp" /> {{ t.currentJob }}
                       </label>
                     </div>
                   </div>
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Start Date</label>
+                      <label class="form-label">{{ t.startDate }}</label>
                       <input type="text" class="form-input" v-model="exp.startDate" @input="updateTimestamp" placeholder="YYYY-MM" />
                     </div>
                     <div class="form-group" v-if="!exp.current">
-                      <label class="form-label">End Date</label>
+                      <label class="form-label">{{ t.endDate }}</label>
                       <input type="text" class="form-input" v-model="exp.endDate" @input="updateTimestamp" placeholder="YYYY-MM" />
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Responsibilities & Achievements</label>
+                    <label class="form-label">{{ t.descLabel }}</label>
                     <textarea class="form-textarea" v-model="exp.description" @input="updateTimestamp" placeholder="Details..."></textarea>
                   </div>
                 </div>
@@ -424,7 +634,7 @@ const updateTimestamp = () => {
             </transition-group>
             
             <button class="btn btn-secondary" style="width: 100%; border-style: dashed;" @click="addExperience">
-              <Plus :size="16" /> Add Experience Block
+              <Plus :size="16" /> {{ t.btnAddExp }}
             </button>
           </div>
         </div>
@@ -432,7 +642,7 @@ const updateTimestamp = () => {
         <!-- Education Section -->
         <div class="editor-section-card" :class="{ 'active-section': activeSection === 'education' }">
           <div class="editor-section-header" @click="toggleSection('education')">
-            <span class="editor-section-title"><GraduationCap :size="18" /> Education ({{ cv.data.education.length }})</span>
+            <span class="editor-section-title"><GraduationCap :size="18" /> {{ t.education }} ({{ cv.data.education.length }})</span>
             <ChevronDown v-if="activeSection !== 'education'" :size="16" />
             <ChevronUp v-else :size="16" />
           </div>
@@ -440,61 +650,82 @@ const updateTimestamp = () => {
             <transition-group name="list" tag="div">
               <div v-for="(edu, index) in cv.data.education" :key="edu.id" class="list-item-card">
                 <div class="list-item-header" @click="toggleItemExpansion(edu.id)">
-                  <div class="list-item-header-info">
-                    <span class="list-item-title">{{ edu.degree || 'Degree' }} {{ edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : '' }}</span>
-                    <span class="list-item-subtitle">{{ edu.institution || 'Institution' }}</span>
+                  <div class="list-item-header-info" style="max-width: 60%">
+                    <span class="list-item-title">{{ edu.degree || t.eduDegree }} {{ edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : '' }}</span>
+                    <span class="list-item-subtitle">{{ edu.institution || t.eduSchool }}</span>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 2px;">
+                    <!-- Move Up Button -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="index === 0"
+                      :title="props.lang === 'es' ? 'Mover Arriba' : 'Move Up'" 
+                      @click.stop="moveItem(cv.data.education, index, 'up')"
+                    >
+                      <ArrowUp :size="14" />
+                    </button>
+                    <!-- Move Down Button -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="index === cv.data.education.length - 1"
+                      :title="props.lang === 'es' ? 'Mover Abajo' : 'Move Down'" 
+                      @click.stop="moveItem(cv.data.education, index, 'down')"
+                    >
+                      <ArrowDown :size="14" />
+                    </button>
+                    <!-- Delete Button -->
                     <button class="btn-icon" style="width: 28px; height: 28px; border: none; background: transparent; color: #ef4444;" title="Delete" @click.stop="removeEducation(index)">
                       <Trash2 :size="14" />
                     </button>
-                    <ChevronDown v-if="!expandedItems[edu.id]" :size="14" />
-                    <ChevronUp v-else :size="14" />
+                    <ChevronDown v-if="!expandedItems[edu.id]" :size="14" style="margin-left: 0.25rem;" />
+                    <ChevronUp v-else :size="14" style="margin-left: 0.25rem;" />
                   </div>
                 </div>
                 
                 <div v-if="expandedItems[edu.id]" class="list-item-content">
                   <div class="form-group">
-                    <label class="form-label">School / Institution</label>
+                    <label class="form-label">{{ t.eduSchool }}</label>
                     <input type="text" class="form-input" v-model="edu.institution" @input="updateTimestamp" placeholder="Stanford University" />
                   </div>
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Degree</label>
+                      <label class="form-label">{{ t.eduDegree }}</label>
                       <input type="text" class="form-input" v-model="edu.degree" @input="updateTimestamp" placeholder="Bachelor of Science" />
                     </div>
                     <div class="form-group">
-                      <label class="form-label">Field of Study</label>
+                      <label class="form-label">{{ t.eduField }}</label>
                       <input type="text" class="form-input" v-model="edu.fieldOfStudy" @input="updateTimestamp" placeholder="Computer Science" />
                     </div>
                   </div>
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Start Date</label>
+                      <label class="form-label">{{ t.startDate }}</label>
                       <input type="text" class="form-input" v-model="edu.startDate" @input="updateTimestamp" placeholder="YYYY-MM" />
                     </div>
                     <div class="form-group" style="display: flex; flex-direction: column;">
                       <label class="form-label" style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-top: auto; margin-bottom: 0.65rem;">
-                        <input type="checkbox" v-model="edu.current" @change="updateTimestamp" /> In Progress
+                        <input type="checkbox" v-model="edu.current" @change="updateTimestamp" /> {{ t.inProgress }}
                       </label>
                     </div>
                   </div>
                   <div class="form-group-row" v-if="!edu.current">
                     <div class="form-group">
-                      <label class="form-label">End Date</label>
+                      <label class="form-label">{{ t.endDate }}</label>
                       <input type="text" class="form-input" v-model="edu.endDate" @input="updateTimestamp" placeholder="YYYY-MM" />
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Additional details / honors</label>
-                    <textarea class="form-textarea" v-model="edu.description" @input="updateTimestamp" placeholder="e.g. GPA 3.9, Major focus..."></textarea>
+                    <label class="form-label">{{ t.eduDetail }}</label>
+                    <textarea class="form-textarea" v-model="edu.description" @input="updateTimestamp" placeholder="e.g. GPA 3.9..."></textarea>
                   </div>
                 </div>
               </div>
             </transition-group>
             
             <button class="btn btn-secondary" style="width: 100%; border-style: dashed;" @click="addEducation">
-              <Plus :size="16" /> Add Education Block
+              <Plus :size="16" /> {{ t.btnAddEdu }}
             </button>
           </div>
         </div>
@@ -502,7 +733,7 @@ const updateTimestamp = () => {
         <!-- Projects Section -->
         <div class="editor-section-card" :class="{ 'active-section': activeSection === 'projects' }">
           <div class="editor-section-header" @click="toggleSection('projects')">
-            <span class="editor-section-title"><FolderGit2 :size="18" /> Personal Projects ({{ cv.data.projects.length }})</span>
+            <span class="editor-section-title"><FolderGit2 :size="18" /> {{ t.projects }} ({{ cv.data.projects.length }})</span>
             <ChevronDown v-if="activeSection !== 'projects'" :size="16" />
             <ChevronUp v-else :size="16" />
           </div>
@@ -510,44 +741,65 @@ const updateTimestamp = () => {
             <transition-group name="list" tag="div">
               <div v-for="(proj, index) in cv.data.projects" :key="proj.id" class="list-item-card">
                 <div class="list-item-header" @click="toggleItemExpansion(proj.id)">
-                  <div class="list-item-header-info">
-                    <span class="list-item-title">{{ proj.name || 'Project Name' }}</span>
-                    <span class="list-item-subtitle">{{ proj.link || 'No project link' }}</span>
+                  <div class="list-item-header-info" style="max-width: 60%">
+                    <span class="list-item-title">{{ proj.name || t.projName }}</span>
+                    <span class="list-item-subtitle">{{ proj.link || 'No URL' }}</span>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 2px;">
+                    <!-- Move Up Button -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="index === 0"
+                      :title="props.lang === 'es' ? 'Mover Arriba' : 'Move Up'" 
+                      @click.stop="moveItem(cv.data.projects, index, 'up')"
+                    >
+                      <ArrowUp :size="14" />
+                    </button>
+                    <!-- Move Down Button -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="index === cv.data.projects.length - 1"
+                      :title="props.lang === 'es' ? 'Mover Abajo' : 'Move Down'" 
+                      @click.stop="moveItem(cv.data.projects, index, 'down')"
+                    >
+                      <ArrowDown :size="14" />
+                    </button>
+                    <!-- Delete Button -->
                     <button class="btn-icon" style="width: 28px; height: 28px; border: none; background: transparent; color: #ef4444;" title="Delete" @click.stop="removeProject(index)">
                       <Trash2 :size="14" />
                     </button>
-                    <ChevronDown v-if="!expandedItems[proj.id]" :size="14" />
-                    <ChevronUp v-else :size="14" />
+                    <ChevronDown v-if="!expandedItems[proj.id]" :size="14" style="margin-left: 0.25rem;" />
+                    <ChevronUp v-else :size="14" style="margin-left: 0.25rem;" />
                   </div>
                 </div>
                 
                 <div v-if="expandedItems[proj.id]" class="list-item-content">
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Project Name</label>
+                      <label class="form-label">{{ t.projName }}</label>
                       <input type="text" class="form-input" v-model="proj.name" @input="updateTimestamp" placeholder="Aether Canvas" />
                     </div>
                     <div class="form-group">
-                      <label class="form-label">Project URL / Link</label>
+                      <label class="form-label">{{ t.projUrl }}</label>
                       <input type="text" class="form-input" v-model="proj.link" @input="updateTimestamp" placeholder="github.com/myproject" />
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Technologies Used</label>
+                    <label class="form-label">{{ t.projTech }}</label>
                     <input type="text" class="form-input" v-model="proj.techStack" @input="updateTimestamp" placeholder="Vue 3, TypeScript, CSS Variables" />
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Project Description</label>
-                    <textarea class="form-textarea" v-model="proj.description" @input="updateTimestamp" placeholder="Describe the project objective, your role, and technical achievements..."></textarea>
+                    <label class="form-label">{{ t.projDesc }}</label>
+                    <textarea class="form-textarea" v-model="proj.description" @input="updateTimestamp" placeholder="Describe project achievements..."></textarea>
                   </div>
                 </div>
               </div>
             </transition-group>
             
             <button class="btn btn-secondary" style="width: 100%; border-style: dashed;" @click="addProject">
-              <Plus :size="16" /> Add Project Block
+              <Plus :size="16" /> {{ t.btnAddProj }}
             </button>
           </div>
         </div>
@@ -555,32 +807,50 @@ const updateTimestamp = () => {
         <!-- Skills Section -->
         <div class="editor-section-card" :class="{ 'active-section': activeSection === 'skills' }">
           <div class="editor-section-header" @click="toggleSection('skills')">
-            <span class="editor-section-title"><Cpu :size="18" /> Core Skills ({{ cv.data.skills.length }})</span>
+            <span class="editor-section-title"><Cpu :size="18" /> {{ t.skills }} ({{ cv.data.skills.length }})</span>
             <ChevronDown v-if="activeSection !== 'skills'" :size="16" />
             <ChevronUp v-else :size="16" />
           </div>
           <div v-if="activeSection === 'skills'" class="editor-section-content">
             <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;">
-              <div v-for="(skill, index) in cv.data.skills" :key="skill.id" style="display: flex; gap: 0.5rem; align-items: center; background: var(--bg-app); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-                <input type="text" class="form-input" style="flex: 2; padding: 0.4rem 0.6rem; font-size: 0.85rem;" v-model="skill.name" @input="updateTimestamp" placeholder="Vue 3" />
-                <select class="form-select" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.85rem;" v-model="skill.level" @change="updateTimestamp">
-                  <option value="">No Level</option>
-                  <option value="Expert">Expert</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Fluent">Fluent</option>
-                  <option value="Native">Native</option>
+              <div v-for="(skill, index) in cv.data.skills" :key="skill.id" style="display: flex; gap: 4px; align-items: center; background: var(--bg-app); padding: 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                <!-- Reorder buttons for skills -->
+                <div style="display: flex; flex-direction: column; gap: 1px;">
+                  <button 
+                    style="border: none; background: transparent; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 1px;" 
+                    :disabled="index === 0" 
+                    @click="moveItem(cv.data.skills, index, 'up')"
+                  >
+                    <ArrowUp :size="12" />
+                  </button>
+                  <button 
+                    style="border: none; background: transparent; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 1px;" 
+                    :disabled="index === cv.data.skills.length - 1" 
+                    @click="moveItem(cv.data.skills, index, 'down')"
+                  >
+                    <ArrowDown :size="12" />
+                  </button>
+                </div>
+
+                <input type="text" class="form-input" style="flex: 2; padding: 0.35rem 0.55rem; font-size: 0.8rem;" v-model="skill.name" @input="updateTimestamp" placeholder="Vue 3" />
+                <select class="form-select" style="flex: 1.2; padding: 0.35rem 0.55rem; font-size: 0.8rem;" v-model="skill.level" @change="updateTimestamp">
+                  <option value="">{{ t.skillLevelOpt.none }}</option>
+                  <option value="Expert">{{ t.skillLevelOpt.expert }}</option>
+                  <option value="Intermediate">{{ t.skillLevelOpt.inter }}</option>
+                  <option value="Beginner">{{ t.skillLevelOpt.beg }}</option>
+                  <option value="Fluent">{{ t.skillLevelOpt.fluent }}</option>
+                  <option value="Native">{{ t.skillLevelOpt.native }}</option>
                 </select>
-                <input type="text" class="form-input" style="flex: 1.5; padding: 0.4rem 0.6rem; font-size: 0.85rem;" v-model="skill.category" @input="updateTimestamp" placeholder="Frontend" />
+                <input type="text" class="form-input" style="flex: 1.2; padding: 0.35rem 0.55rem; font-size: 0.8rem;" v-model="skill.category" @input="updateTimestamp" placeholder="Frontend" />
                 
-                <button class="btn-icon" style="width: 32px; height: 32px; border: none; background: transparent; color: #ef4444; flex-shrink: 0;" title="Remove Skill" @click="removeSkill(index)">
-                  <Trash2 :size="14" />
+                <button class="btn-icon" style="width: 28px; height: 28px; border: none; background: transparent; color: #ef4444; flex-shrink: 0;" title="Remove Skill" @click="removeSkill(index)">
+                  <Trash2 :size="13" />
                 </button>
               </div>
             </div>
             
             <button class="btn btn-secondary" style="width: 100%; border-style: dashed;" @click="addSkill">
-              <Plus :size="16" /> Add Skill
+              <Plus :size="16" /> {{ t.btnAddSkill }}
             </button>
           </div>
         </div>
@@ -594,52 +864,94 @@ const updateTimestamp = () => {
         >
           <div class="editor-section-header" @click="toggleSection(`custom-${sect.id}`)">
             <span class="editor-section-title">
-              <BookmarkPlus :size="18" /> {{ sect.title || 'Custom Section' }}
+              <BookmarkPlus :size="18" /> {{ sect.title || t.customSect }}
             </span>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 2px;">
+              <!-- Reorder Sections Up -->
+              <button 
+                class="btn-icon" 
+                style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                :disabled="sIndex === 0"
+                :title="props.lang === 'es' ? 'Mover Arriba' : 'Move Up'" 
+                @click.stop="moveItem(cv.data.customSections, sIndex, 'up')"
+              >
+                <ArrowUp :size="14" />
+              </button>
+              <!-- Reorder Sections Down -->
+              <button 
+                class="btn-icon" 
+                style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                :disabled="sIndex === cv.data.customSections.length - 1"
+                :title="props.lang === 'es' ? 'Mover Abajo' : 'Move Down'" 
+                @click.stop="moveItem(cv.data.customSections, sIndex, 'down')"
+              >
+                <ArrowDown :size="14" />
+              </button>
+              <!-- Delete Section Button -->
               <button class="btn-icon" style="width: 28px; height: 28px; border: none; background: transparent; color: #ef4444;" title="Delete Section" @click.stop="removeCustomSection(sIndex)">
                 <Trash2 :size="14" />
               </button>
-              <ChevronDown v-if="activeSection !== `custom-${sect.id}`" :size="16" />
-              <ChevronUp v-else :size="16" />
+              <ChevronDown v-if="activeSection !== `custom-${sect.id}`" :size="16" style="margin-left: 0.25rem;" />
+              <ChevronUp v-else :size="16" style="margin-left: 0.25rem;" />
             </div>
           </div>
           
           <div v-if="activeSection === `custom-${sect.id}`" class="editor-section-content">
             <div class="form-group">
-              <label class="form-label">Section Title</label>
+              <label class="form-label">{{ t.customTitle }}</label>
               <input type="text" class="form-input" v-model="sect.title" @input="updateTimestamp" placeholder="e.g. Languages, Certifications..." />
             </div>
             
             <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
               <div v-for="(item, iIndex) in sect.items" :key="item.id" class="list-item-card" style="margin-bottom: 0;">
                 <div class="list-item-header" @click="toggleItemExpansion(item.id)">
-                  <div class="list-item-header-info">
-                    <span class="list-item-title">{{ item.title || 'Title' }}</span>
+                  <div class="list-item-header-info" style="max-width: 60%">
+                    <span class="list-item-title">{{ item.title || t.customItem }}</span>
                     <span class="list-item-subtitle">{{ item.subtitle || 'Subtitle' }}</span>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 2px;">
+                    <!-- Move Item Up inside Section -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="iIndex === 0"
+                      :title="props.lang === 'es' ? 'Mover Arriba' : 'Move Up'" 
+                      @click.stop="moveItem(sect.items, iIndex, 'up')"
+                    >
+                      <ArrowUp :size="14" />
+                    </button>
+                    <!-- Move Item Down inside Section -->
+                    <button 
+                      class="btn-icon" 
+                      style="width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted);" 
+                      :disabled="iIndex === sect.items.length - 1"
+                      :title="props.lang === 'es' ? 'Mover Abajo' : 'Move Down'" 
+                      @click.stop="moveItem(sect.items, iIndex, 'down')"
+                    >
+                      <ArrowDown :size="14" />
+                    </button>
+                    <!-- Delete Item inside Section -->
                     <button class="btn-icon" style="width: 28px; height: 28px; border: none; background: transparent; color: #ef4444;" title="Delete Item" @click.stop="removeCustomSectionItem(sect, iIndex)">
                       <Trash2 :size="14" />
                     </button>
-                    <ChevronDown v-if="!expandedItems[item.id]" :size="14" />
-                    <ChevronUp v-else :size="14" />
+                    <ChevronDown v-if="!expandedItems[item.id]" :size="14" style="margin-left: 0.25rem;" />
+                    <ChevronUp v-else :size="14" style="margin-left: 0.25rem;" />
                   </div>
                 </div>
                 
                 <div v-if="expandedItems[item.id]" class="list-item-content">
                   <div class="form-group-row">
                     <div class="form-group">
-                      <label class="form-label">Item Title</label>
+                      <label class="form-label">{{ t.customLabel }}</label>
                       <input type="text" class="form-input" v-model="item.title" @input="updateTimestamp" placeholder="e.g. French, AWS Certified Developer" />
                     </div>
                     <div class="form-group">
-                      <label class="form-label">Item Subtitle</label>
+                      <label class="form-label">{{ t.customSubtitle }}</label>
                       <input type="text" class="form-input" v-model="item.subtitle" @input="updateTimestamp" placeholder="e.g. Fluent, Amazon Web Services" />
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Brief Description</label>
+                    <label class="form-label">{{ t.customDesc }}</label>
                     <textarea class="form-textarea" v-model="item.description" @input="updateTimestamp" placeholder="Additional info..."></textarea>
                   </div>
                 </div>
@@ -647,14 +959,14 @@ const updateTimestamp = () => {
             </div>
             
             <button class="btn btn-secondary" style="width: 100%; border-style: dashed; margin-top: 0.5rem;" @click="addCustomSectionItem(sect)">
-              <Plus :size="16" /> Add Item to Section
+              <Plus :size="16" /> {{ t.btnAddItemCustom }}
             </button>
           </div>
         </div>
 
         <!-- Add Custom Section Trigger -->
         <button class="btn btn-secondary" style="width: 100%; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" @click="addCustomSection">
-          <BookmarkPlus :size="18" style="color: var(--primary)" /> Add Custom Section (e.g. Languages)
+          <BookmarkPlus :size="18" style="color: var(--primary)" /> {{ t.btnAddCustom }}
         </button>
 
       </div>
