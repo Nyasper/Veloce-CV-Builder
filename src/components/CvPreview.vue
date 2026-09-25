@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CvProject } from '../types'
+import { formatDateRange } from '../utils'
 import { 
   Mail, 
   Phone, 
@@ -28,21 +29,35 @@ const emit = defineEmits<{
 }>()
 
 const printCv = () => {
+  const originalTitle = document.title
+  if (props.cv.title?.trim()) {
+    document.title = props.cv.title.trim()
+  }
   window.print()
+  setTimeout(() => {
+    document.title = originalTitle
+  }, 1000)
 }
 
-// Group skills by category for better sidebar layout
-const getGroupedSkills = () => {
+// Group skills by category as a cached computed property
+const groupedSkills = computed(() => {
   const groups: Record<string, string[]> = {}
   props.cv.data.skills.forEach(skill => {
     if (!skill.name) return
-    const cat = skill.category || (props.lang === 'es' ? 'General' : 'General')
+    const cat = skill.category?.trim() || (props.lang === 'es' ? 'Habilidades' : 'Skills')
     if (!groups[cat]) {
       groups[cat] = []
     }
     groups[cat].push(skill.name + (skill.level ? ` (${skill.level})` : ''))
   })
   return groups
+})
+
+const handleImageError = (e: Event) => {
+  const target = e.target as HTMLElement
+  if (target) {
+    target.style.display = 'none'
+  }
 }
 
 // Bilingual Resume Subtitles & Labels
@@ -114,7 +129,12 @@ const t = computed(() => {
     <!-- Top toolbar controls (automatically hidden in print mode) -->
     <div class="preview-toolbar">
       <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="emit('back')">
+        <button 
+          class="btn btn-secondary" 
+          style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" 
+          :aria-label="t.btnDashboard"
+          @click="emit('back')"
+        >
           <ArrowLeft :size="15" /> {{ t.btnDashboard }}
         </button>
         <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); display: flex; align-items: center; gap: 0.25rem;">
@@ -123,10 +143,20 @@ const t = computed(() => {
       </div>
       
       <div class="preview-toolbar-actions">
-        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="emit('export')">
+        <button 
+          class="btn btn-secondary" 
+          style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" 
+          :aria-label="t.btnJson"
+          @click="emit('export')"
+        >
           <Download :size="15" /> {{ t.btnJson }}
         </button>
-        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="printCv">
+        <button 
+          class="btn btn-primary" 
+          style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" 
+          :aria-label="t.btnPrint"
+          @click="printCv"
+        >
           <Printer :size="15" /> {{ t.btnPrint }}
         </button>
       </div>
@@ -147,7 +177,12 @@ const t = computed(() => {
         <div class="sidebar">
           <!-- Avatar -->
           <div v-if="cv.data.personalInfo.avatarUrl" class="avatar-container">
-            <img :src="cv.data.personalInfo.avatarUrl" alt="Avatar" class="avatar-img" />
+            <img 
+              :src="cv.data.personalInfo.avatarUrl" 
+              alt="Avatar" 
+              class="avatar-img" 
+              @error="handleImageError"
+            />
           </div>
           
           <div>
@@ -157,36 +192,62 @@ const t = computed(() => {
           
           <!-- Contact Info -->
           <div class="contact-info">
-            <div v-if="cv.data.personalInfo.email" class="contact-item">
+            <a 
+              v-if="cv.data.personalInfo.email" 
+              :href="'mailto:' + cv.data.personalInfo.email" 
+              class="contact-item"
+            >
               <Mail :size="12" style="color: var(--cv-primary); flex-shrink: 0;" />
               <span>{{ cv.data.personalInfo.email }}</span>
-            </div>
-            <div v-if="cv.data.personalInfo.phone" class="contact-item">
+            </a>
+            <a 
+              v-if="cv.data.personalInfo.phone" 
+              :href="'tel:' + cv.data.personalInfo.phone.replace(/\s+/g, '')" 
+              class="contact-item"
+            >
               <Phone :size="12" style="color: var(--cv-primary); flex-shrink: 0;" />
               <span>{{ cv.data.personalInfo.phone }}</span>
-            </div>
+            </a>
             <div v-if="cv.data.personalInfo.location" class="contact-item">
               <MapPin :size="12" style="color: var(--cv-primary); flex-shrink: 0;" />
               <span>{{ cv.data.personalInfo.location }}</span>
             </div>
-            <div v-if="cv.data.personalInfo.website" class="contact-item">
+            <a 
+              v-if="cv.data.personalInfo.website" 
+              :href="'https://' + cv.data.personalInfo.website.replace(/^https?:\/\//, '')" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="contact-item"
+            >
               <Globe :size="12" style="color: var(--cv-primary); flex-shrink: 0;" />
               <span>{{ cv.data.personalInfo.website }}</span>
-            </div>
-            <div v-if="cv.data.personalInfo.github" class="contact-item">
+            </a>
+            <a 
+              v-if="cv.data.personalInfo.github" 
+              :href="'https://' + cv.data.personalInfo.github.replace(/^https?:\/\//, '')" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="contact-item"
+            >
               <Github :size="12" style="color: var(--cv-primary); flex-shrink: 0;" />
               <span>{{ cv.data.personalInfo.github }}</span>
-            </div>
-            <div v-if="cv.data.personalInfo.linkedin" class="contact-item">
+            </a>
+            <a 
+              v-if="cv.data.personalInfo.linkedin" 
+              :href="'https://' + cv.data.personalInfo.linkedin.replace(/^https?:\/\//, '')" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="contact-item"
+            >
               <Linkedin :size="12" style="color: var(--cv-primary); flex-shrink: 0;" />
               <span>{{ cv.data.personalInfo.linkedin }}</span>
-            </div>
+            </a>
           </div>
 
           <!-- Skills grouped in Sidebar -->
           <div v-if="cv.data.skills.length > 0" class="cv-section" style="margin-top: 1rem;">
             <h2>{{ t.skills }}</h2>
-            <div v-for="(skills, category) in getGroupedSkills()" :key="category" style="margin-bottom: 0.75rem;">
+            <div v-for="(skills, category) in groupedSkills" :key="category" style="margin-bottom: 0.75rem;">
               <div style="font-size: 0.75rem; font-weight: 700; color: var(--cv-primary); margin-bottom: 0.25rem;">
                 {{ category }}
               </div>
@@ -204,7 +265,7 @@ const t = computed(() => {
           <!-- Summary -->
           <div v-if="cv.data.personalInfo.summary" class="cv-section">
             <h2>{{ t.profile }}</h2>
-            <p class="cv-item-description" style="font-size: 0.88rem; line-height: 1.5;">
+            <p class="cv-item-description" style="font-size: 0.88rem; line-height: 1.5; white-space: pre-line;">
               {{ cv.data.personalInfo.summary }}
             </p>
           </div>
@@ -215,15 +276,15 @@ const t = computed(() => {
             <div v-for="exp in cv.data.experience" :key="exp.id" class="cv-item">
               <div class="cv-item-header">
                 <span>{{ exp.position || 'Position' }}</span>
-                <span style="font-size: 0.8rem; color: var(--cv-text-muted)">
-                  {{ exp.startDate || 'Start' }} — {{ exp.current ? t.present : (exp.endDate || 'End') }}
+                <span v-if="formatDateRange(exp.startDate, exp.endDate, exp.current, t.present)" style="font-size: 0.8rem; color: var(--cv-text-muted)">
+                  {{ formatDateRange(exp.startDate, exp.endDate, exp.current, t.present) }}
                 </span>
               </div>
               <div class="cv-item-subheader">
                 <span>{{ exp.company || 'Company' }}</span>
-                <span style="font-size: 0.8rem; font-weight: normal;">{{ exp.location }}</span>
+                <span v-if="exp.location" style="font-size: 0.8rem; font-weight: normal;">{{ exp.location }}</span>
               </div>
-              <p class="cv-item-description" style="white-space: pre-line;">{{ exp.description }}</p>
+              <p v-if="exp.description" class="cv-item-description" style="white-space: pre-line;">{{ exp.description }}</p>
             </div>
           </div>
 
@@ -232,15 +293,15 @@ const t = computed(() => {
             <h2>{{ t.education }}</h2>
             <div v-for="edu in cv.data.education" :key="edu.id" class="cv-item">
               <div class="cv-item-header">
-                <span>{{ edu.degree || 'Degree' }} {{ edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : '' }}</span>
-                <span style="font-size: 0.8rem; color: var(--cv-text-muted)">
-                  {{ edu.startDate || 'Start' }} — {{ edu.current ? t.present : (edu.endDate || 'End') }}
+                <span>{{ edu.degree || 'Degree' }}{{ edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : '' }}</span>
+                <span v-if="formatDateRange(edu.startDate, edu.endDate, edu.current, t.present)" style="font-size: 0.8rem; color: var(--cv-text-muted)">
+                  {{ formatDateRange(edu.startDate, edu.endDate, edu.current, t.present) }}
                 </span>
               </div>
               <div class="cv-item-subheader">
                 <span>{{ edu.institution || 'Institution' }}</span>
               </div>
-              <p v-if="edu.description" class="cv-item-description">{{ edu.description }}</p>
+              <p v-if="edu.description" class="cv-item-description" style="white-space: pre-line;">{{ edu.description }}</p>
             </div>
           </div>
 
@@ -251,7 +312,14 @@ const t = computed(() => {
               <div class="cv-item-header">
                 <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
                   {{ proj.name || 'Project Name' }}
-                  <a v-if="proj.link" :href="'https://' + proj.link.replace(/^https?:\/\//, '')" target="_blank" style="color: var(--cv-primary); font-size: 0.75rem;">
+                  <a 
+                    v-if="proj.link" 
+                    :href="'https://' + proj.link.replace(/^https?:\/\//, '')" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style="color: var(--cv-primary); font-size: 0.75rem;"
+                    :aria-label="proj.name + ' link'"
+                  >
                     <Link2 :size="12" />
                   </a>
                 </span>
@@ -259,7 +327,7 @@ const t = computed(() => {
                   {{ proj.techStack }}
                 </span>
               </div>
-              <p class="cv-item-description">{{ proj.description }}</p>
+              <p v-if="proj.description" class="cv-item-description" style="white-space: pre-line;">{{ proj.description }}</p>
             </div>
           </div>
 
@@ -269,9 +337,9 @@ const t = computed(() => {
             <div v-for="item in sect.items" :key="item.id" class="cv-item">
               <div class="cv-item-header">
                 <span>{{ item.title }}</span>
-                <span style="font-size: 0.8rem; color: var(--cv-primary)">{{ item.subtitle }}</span>
+                <span v-if="item.subtitle" style="font-size: 0.8rem; color: var(--cv-primary)">{{ item.subtitle }}</span>
               </div>
-              <p v-if="item.description" class="cv-item-description">{{ item.description }}</p>
+              <p v-if="item.description" class="cv-item-description" style="white-space: pre-line;">{{ item.description }}</p>
             </div>
           </div>
         </div>
@@ -283,40 +351,74 @@ const t = computed(() => {
       <div v-else-if="cv.design.template === 'executive'" class="template-executive">
         <!-- Header -->
         <div class="header">
+          <div v-if="cv.data.personalInfo.avatarUrl" class="avatar-container" style="margin: 0 auto 0.75rem; width: 90px; height: 90px;">
+            <img 
+              :src="cv.data.personalInfo.avatarUrl" 
+              alt="Avatar" 
+              class="avatar-img" 
+              @error="handleImageError" 
+            />
+          </div>
           <h1>{{ cv.data.personalInfo.fullName || 'Your Name' }}</h1>
           <div class="job-title">{{ cv.data.personalInfo.title || 'Professional Title' }}</div>
           
           <div class="contact-row">
-            <div v-if="cv.data.personalInfo.email" class="contact-item">
+            <a 
+              v-if="cv.data.personalInfo.email" 
+              :href="'mailto:' + cv.data.personalInfo.email" 
+              class="contact-item"
+            >
               <Mail :size="12" style="color: var(--cv-primary);" />
               <span>{{ cv.data.personalInfo.email }}</span>
-            </div>
-            <div v-if="cv.data.personalInfo.phone" class="contact-item">
+            </a>
+            <a 
+              v-if="cv.data.personalInfo.phone" 
+              :href="'tel:' + cv.data.personalInfo.phone.replace(/\s+/g, '')" 
+              class="contact-item"
+            >
               <Phone :size="12" style="color: var(--cv-primary);" />
               <span>{{ cv.data.personalInfo.phone }}</span>
-            </div>
+            </a>
             <div v-if="cv.data.personalInfo.location" class="contact-item">
               <MapPin :size="12" style="color: var(--cv-primary);" />
               <span>{{ cv.data.personalInfo.location }}</span>
             </div>
-            <div v-if="cv.data.personalInfo.website" class="contact-item">
+            <a 
+              v-if="cv.data.personalInfo.website" 
+              :href="'https://' + cv.data.personalInfo.website.replace(/^https?:\/\//, '')" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="contact-item"
+            >
               <Globe :size="12" style="color: var(--cv-primary);" />
               <span>{{ cv.data.personalInfo.website }}</span>
-            </div>
-            <div v-if="cv.data.personalInfo.github" class="contact-item">
+            </a>
+            <a 
+              v-if="cv.data.personalInfo.github" 
+              :href="'https://' + cv.data.personalInfo.github.replace(/^https?:\/\//, '')" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="contact-item"
+            >
               <Github :size="12" style="color: var(--cv-primary);" />
               <span>{{ cv.data.personalInfo.github }}</span>
-            </div>
-            <div v-if="cv.data.personalInfo.linkedin" class="contact-item">
+            </a>
+            <a 
+              v-if="cv.data.personalInfo.linkedin" 
+              :href="'https://' + cv.data.personalInfo.linkedin.replace(/^https?:\/\//, '')" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="contact-item"
+            >
               <Linkedin :size="12" style="color: var(--cv-primary);" />
               <span>{{ cv.data.personalInfo.linkedin }}</span>
-            </div>
+            </a>
           </div>
         </div>
 
         <!-- Summary -->
         <div v-if="cv.data.personalInfo.summary" class="cv-section" style="text-align: center;">
-          <p class="cv-item-description" style="font-style: italic; max-width: 700px; margin: 0 auto; line-height: 1.6; font-size: 0.92rem;">
+          <p class="cv-item-description" style="font-style: italic; max-width: 700px; margin: 0 auto; line-height: 1.6; font-size: 0.92rem; white-space: pre-line;">
             "{{ cv.data.personalInfo.summary }}"
           </p>
         </div>
@@ -327,15 +429,15 @@ const t = computed(() => {
           <div v-for="exp in cv.data.experience" :key="exp.id" class="cv-item">
             <div class="cv-item-header">
               <span>{{ exp.company || 'Company' }}</span>
-              <span style="font-size: 0.85rem; color: var(--cv-text-muted)">
-                {{ exp.startDate || 'Start' }} — {{ exp.current ? t.present : (exp.endDate || 'End') }}
+              <span v-if="formatDateRange(exp.startDate, exp.endDate, exp.current, t.present)" style="font-size: 0.85rem; color: var(--cv-text-muted)">
+                {{ formatDateRange(exp.startDate, exp.endDate, exp.current, t.present) }}
               </span>
             </div>
             <div class="cv-item-subheader">
               <span>{{ exp.position || 'Position' }}</span>
-              <span style="font-size: 0.85rem; font-weight: normal;">{{ exp.location }}</span>
+              <span v-if="exp.location" style="font-size: 0.85rem; font-weight: normal;">{{ exp.location }}</span>
             </div>
-            <p class="cv-item-description" style="white-space: pre-line; margin-top: 0.25rem;">{{ exp.description }}</p>
+            <p v-if="exp.description" class="cv-item-description" style="white-space: pre-line; margin-top: 0.25rem;">{{ exp.description }}</p>
           </div>
         </div>
 
@@ -345,14 +447,14 @@ const t = computed(() => {
           <div v-for="edu in cv.data.education" :key="edu.id" class="cv-item">
             <div class="cv-item-header">
               <span>{{ edu.institution || 'Institution' }}</span>
-              <span style="font-size: 0.85rem; color: var(--cv-text-muted)">
-                {{ edu.startDate || 'Start' }} — {{ edu.current ? t.present : (edu.endDate || 'End') }}
+              <span v-if="formatDateRange(edu.startDate, edu.endDate, edu.current, t.present)" style="font-size: 0.85rem; color: var(--cv-text-muted)">
+                {{ formatDateRange(edu.startDate, edu.endDate, edu.current, t.present) }}
               </span>
             </div>
             <div class="cv-item-subheader">
-              <span>{{ edu.degree || 'Degree' }} {{ edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : '' }}</span>
+              <span>{{ edu.degree || 'Degree' }}{{ edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : '' }}</span>
             </div>
-            <p v-if="edu.description" class="cv-item-description" style="margin-top: 0.25rem;">{{ edu.description }}</p>
+            <p v-if="edu.description" class="cv-item-description" style="white-space: pre-line; margin-top: 0.25rem;">{{ edu.description }}</p>
           </div>
         </div>
 
@@ -363,7 +465,14 @@ const t = computed(() => {
             <div class="cv-item-header">
               <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
                 {{ proj.name || 'Project Name' }}
-                <a v-if="proj.link" :href="'https://' + proj.link.replace(/^https?:\/\//, '')" target="_blank" style="color: var(--cv-primary); font-size: 0.75rem;">
+                <a 
+                  v-if="proj.link" 
+                  :href="'https://' + proj.link.replace(/^https?:\/\//, '')" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style="color: var(--cv-primary); font-size: 0.75rem;"
+                  :aria-label="proj.name + ' link'"
+                >
                   <Link2 :size="12" />
                 </a>
               </span>
@@ -371,7 +480,7 @@ const t = computed(() => {
                 {{ proj.techStack }}
               </span>
             </div>
-            <p class="cv-item-description" style="margin-top: 0.25rem;">{{ proj.description }}</p>
+            <p v-if="proj.description" class="cv-item-description" style="white-space: pre-line; margin-top: 0.25rem;">{{ proj.description }}</p>
           </div>
         </div>
 
@@ -391,9 +500,9 @@ const t = computed(() => {
           <div v-for="item in sect.items" :key="item.id" class="cv-item">
             <div class="cv-item-header">
               <span>{{ item.title }}</span>
-              <span style="font-size: 0.85rem; color: var(--cv-primary)">{{ item.subtitle }}</span>
+              <span v-if="item.subtitle" style="font-size: 0.85rem; color: var(--cv-primary)">{{ item.subtitle }}</span>
             </div>
-            <p v-if="item.description" class="cv-item-description" style="margin-top: 0.25rem;">{{ item.description }}</p>
+            <p v-if="item.description" class="cv-item-description" style="white-space: pre-line; margin-top: 0.25rem;">{{ item.description }}</p>
           </div>
         </div>
       </div>
@@ -409,7 +518,11 @@ const t = computed(() => {
             <div class="job-title">{{ cv.data.personalInfo.title || 'Professional Title' }}</div>
           </div>
           <div v-if="cv.data.personalInfo.avatarUrl" class="header-avatar">
-            <img :src="cv.data.personalInfo.avatarUrl" alt="Avatar" />
+            <img 
+              :src="cv.data.personalInfo.avatarUrl" 
+              alt="Avatar" 
+              @error="handleImageError"
+            />
           </div>
         </div>
 
@@ -417,59 +530,88 @@ const t = computed(() => {
         <div class="creative-contact-bar">
           <div class="contact-block" v-if="cv.data.personalInfo.email || cv.data.personalInfo.phone">
             <div class="contact-block-label">{{ t.touch }}</div>
-            <div>{{ cv.data.personalInfo.email }}</div>
-            <div>{{ cv.data.personalInfo.phone }}</div>
+            <div v-if="cv.data.personalInfo.email">
+              <a :href="'mailto:' + cv.data.personalInfo.email">{{ cv.data.personalInfo.email }}</a>
+            </div>
+            <div v-if="cv.data.personalInfo.phone">
+              <a :href="'tel:' + cv.data.personalInfo.phone.replace(/\s+/g, '')">{{ cv.data.personalInfo.phone }}</a>
+            </div>
           </div>
           <div class="contact-block" v-if="cv.data.personalInfo.location || cv.data.personalInfo.website">
             <div class="contact-block-label">{{ t.locationWeb }}</div>
-            <div>{{ cv.data.personalInfo.location }}</div>
-            <div style="color: var(--cv-primary)">{{ cv.data.personalInfo.website }}</div>
+            <div v-if="cv.data.personalInfo.location">{{ cv.data.personalInfo.location }}</div>
+            <div v-if="cv.data.personalInfo.website">
+              <a 
+                :href="'https://' + cv.data.personalInfo.website.replace(/^https?:\/\//, '')" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style="color: var(--cv-primary)"
+              >
+                {{ cv.data.personalInfo.website }}
+              </a>
+            </div>
           </div>
           <div class="contact-block" v-if="cv.data.personalInfo.github || cv.data.personalInfo.linkedin">
             <div class="contact-block-label">{{ t.social }}</div>
-            <div>{{ cv.data.personalInfo.github }}</div>
-            <div>{{ cv.data.personalInfo.linkedin }}</div>
+            <div v-if="cv.data.personalInfo.github">
+              <a 
+                :href="'https://' + cv.data.personalInfo.github.replace(/^https?:\/\//, '')" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                {{ cv.data.personalInfo.github }}
+              </a>
+            </div>
+            <div v-if="cv.data.personalInfo.linkedin">
+              <a 
+                :href="'https://' + cv.data.personalInfo.linkedin.replace(/^https?:\/\//, '')" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                {{ cv.data.personalInfo.linkedin }}
+              </a>
+            </div>
           </div>
         </div>
 
         <!-- Asymmetric Grid blocks -->
         <div class="sections-grid">
           <!-- Profile/Summary (Full Width in Grid) -->
-          <div v-if="cv.data.personalInfo.summary" class="span-full">
+          <div v-if="cv.data.personalInfo.summary" class="span-full cv-section">
             <h2>{{ t.about }}</h2>
-            <p class="cv-item-description" style="font-size: 0.9rem; line-height: 1.55;">
+            <p class="cv-item-description" style="font-size: 0.9rem; line-height: 1.55; white-space: pre-line;">
               {{ cv.data.personalInfo.summary }}
             </p>
           </div>
 
           <!-- Left Grid Column: Experience -->
-          <div v-if="cv.data.experience.length > 0" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div v-if="cv.data.experience.length > 0" class="cv-section" style="display: flex; flex-direction: column; gap: 1.25rem;">
             <h2>{{ t.career }}</h2>
-            <div v-for="exp in cv.data.experience" :key="exp.id">
+            <div v-for="exp in cv.data.experience" :key="exp.id" class="cv-item">
               <div class="cv-item-header">{{ exp.position || 'Position' }}</div>
               <div class="cv-item-meta">
-                {{ exp.company }} | {{ exp.startDate }} — {{ exp.current ? t.present : exp.endDate }}
+                {{ exp.company }} {{ exp.location ? `• ${exp.location}` : '' }} | {{ formatDateRange(exp.startDate, exp.endDate, exp.current, t.present) }}
               </div>
-              <p class="cv-item-description" style="white-space: pre-line;">{{ exp.description }}</p>
+              <p v-if="exp.description" class="cv-item-description" style="white-space: pre-line;">{{ exp.description }}</p>
             </div>
           </div>
 
           <!-- Right Grid Column: Education & Skills -->
           <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             <!-- Education -->
-            <div v-if="cv.data.education.length > 0" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div v-if="cv.data.education.length > 0" class="cv-section" style="display: flex; flex-direction: column; gap: 1rem;">
               <h2>{{ t.studies }}</h2>
-              <div v-for="edu in cv.data.education" :key="edu.id">
-                <div class="cv-item-header">{{ edu.degree || 'Degree' }}</div>
+              <div v-for="edu in cv.data.education" :key="edu.id" class="cv-item">
+                <div class="cv-item-header">{{ edu.degree || 'Degree' }}{{ edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : '' }}</div>
                 <div class="cv-item-meta">
-                  {{ edu.institution }} | {{ edu.startDate }} — {{ edu.current ? t.present : edu.endDate }}
+                  {{ edu.institution }} | {{ formatDateRange(edu.startDate, edu.endDate, edu.current, t.present) }}
                 </div>
-                <p v-if="edu.description" class="cv-item-description">{{ edu.description }}</p>
+                <p v-if="edu.description" class="cv-item-description" style="white-space: pre-line;">{{ edu.description }}</p>
               </div>
             </div>
 
             <!-- Skills -->
-            <div v-if="cv.data.skills.length > 0">
+            <div v-if="cv.data.skills.length > 0" class="cv-section">
               <h2>{{ t.capabilities }}</h2>
               <div style="display: flex; flex-wrap: wrap;">
                 <span v-for="skill in cv.data.skills" :key="skill.id" class="skill-badge">
@@ -480,34 +622,41 @@ const t = computed(() => {
           </div>
 
           <!-- Projects (Full Width in Grid) -->
-          <div v-if="cv.data.projects.length > 0" class="span-full" style="margin-top: 0.5rem;">
+          <div v-if="cv.data.projects.length > 0" class="span-full cv-section" style="margin-top: 0.5rem;">
             <h2>{{ t.featured }}</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-              <div v-for="proj in cv.data.projects" :key="proj.id" style="border: 1px solid var(--cv-border); padding: 1rem; border-radius: var(--radius-sm);">
+              <div v-for="proj in cv.data.projects" :key="proj.id" class="cv-item" style="border: 1px solid var(--cv-border); padding: 1rem; border-radius: var(--radius-sm);">
                 <div class="cv-item-header" style="display: flex; justify-content: space-between; align-items: center;">
                   <span>{{ proj.name }}</span>
-                  <a v-if="proj.link" :href="'https://' + proj.link.replace(/^https?:\/\//, '')" target="_blank" style="color: var(--cv-primary)">
+                  <a 
+                    v-if="proj.link" 
+                    :href="'https://' + proj.link.replace(/^https?:\/\//, '')" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style="color: var(--cv-primary)"
+                    :aria-label="proj.name + ' link'"
+                  >
                     <Link2 :size="12" />
                   </a>
                 </div>
                 <div v-if="proj.techStack" style="font-size: 0.72rem; color: var(--cv-primary); margin-bottom: 0.4rem; font-weight: 500;">
                   {{ proj.techStack }}
                 </div>
-                <p class="cv-item-description" style="font-size: 0.8rem; line-height: 1.4;">{{ proj.description }}</p>
+                <p v-if="proj.description" class="cv-item-description" style="font-size: 0.8rem; line-height: 1.4; white-space: pre-line;">{{ proj.description }}</p>
               </div>
             </div>
           </div>
 
           <!-- Custom Sections (Full Width in Grid) -->
-          <div v-for="sect in cv.data.customSections" :key="sect.id" class="span-full">
+          <div v-for="sect in cv.data.customSections" :key="sect.id" class="span-full cv-section">
             <h2 v-if="sect.items.length > 0">{{ sect.title }}</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-              <div v-for="item in sect.items" :key="item.id">
+              <div v-for="item in sect.items" :key="item.id" class="cv-item">
                 <div class="cv-item-header" style="display: flex; justify-content: space-between;">
                   <span>{{ item.title }}</span>
-                  <span style="font-size: 0.8rem; color: var(--cv-primary)">{{ item.subtitle }}</span>
+                  <span v-if="item.subtitle" style="font-size: 0.8rem; color: var(--cv-primary)">{{ item.subtitle }}</span>
                 </div>
-                <p v-if="item.description" class="cv-item-description" style="font-size: 0.8rem;">{{ item.description }}</p>
+                <p v-if="item.description" class="cv-item-description" style="font-size: 0.8rem; white-space: pre-line;">{{ item.description }}</p>
               </div>
             </div>
           </div>

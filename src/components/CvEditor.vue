@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { CvProject, Experience, Education, Project, Skill, CustomSection, CustomSectionItem } from '../types'
+import { generateId } from '../utils'
 import {
   User,
   Briefcase,
@@ -16,11 +17,14 @@ import {
   Settings,
   Sparkles,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Upload,
+  FileText
 } from 'lucide-vue-next'
 
+const cv = defineModel<CvProject>('cv', { required: true })
+
 const props = withDefaults(defineProps<{
-  cv: CvProject
   lang?: 'en' | 'es'
 }>(), {
   lang: 'en'
@@ -28,6 +32,7 @@ const props = withDefaults(defineProps<{
 
 const activeSection = ref<string>('personal')
 const activeTab = ref<'content' | 'design'>('content')
+const avatarFileInput = ref<HTMLInputElement | null>(null)
 
 const toggleSection = (section: string) => {
   if (activeSection.value === section) {
@@ -45,19 +50,16 @@ const toggleItemExpansion = (itemId: string) => {
 }
 
 // Reordering helper function: swaps items in place
-const moveItem = (array: any[], index: number, direction: 'up' | 'down') => {
+const moveItem = <T>(array: T[], index: number, direction: 'up' | 'down') => {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= array.length) return
   
   // Swap elements
-  const temp = array[index]
-  array[index] = array[newIndex]
+  const temp = array[index]!
+  array[index] = array[newIndex]!
   array[newIndex] = temp
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.updatedAt = new Date().toISOString()
 }
-
-// Helpers to add list items
-const generateId = () => Math.random().toString(36).substring(2, 9)
 
 const addExperience = () => {
   const newExp: Experience = {
@@ -70,14 +72,14 @@ const addExperience = () => {
     current: false,
     description: ''
   }
-  props.cv.data.experience.push(newExp)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.experience.push(newExp)
+  cv.value.updatedAt = new Date().toISOString()
   expandedItems.value[newExp.id] = true
 }
 
 const removeExperience = (index: number) => {
-  props.cv.data.experience.splice(index, 1)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.experience.splice(index, 1)
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 const addEducation = () => {
@@ -91,14 +93,14 @@ const addEducation = () => {
     current: false,
     description: ''
   }
-  props.cv.data.education.push(newEdu)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.education.push(newEdu)
+  cv.value.updatedAt = new Date().toISOString()
   expandedItems.value[newEdu.id] = true
 }
 
 const removeEducation = (index: number) => {
-  props.cv.data.education.splice(index, 1)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.education.splice(index, 1)
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 const addProject = () => {
@@ -109,14 +111,14 @@ const addProject = () => {
     techStack: '',
     link: ''
   }
-  props.cv.data.projects.push(newProj)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.projects.push(newProj)
+  cv.value.updatedAt = new Date().toISOString()
   expandedItems.value[newProj.id] = true
 }
 
 const removeProject = (index: number) => {
-  props.cv.data.projects.splice(index, 1)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.projects.splice(index, 1)
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 const addSkill = () => {
@@ -126,13 +128,13 @@ const addSkill = () => {
     level: '',
     category: props.lang === 'es' ? 'Habilidades' : 'Skills'
   }
-  props.cv.data.skills.push(newSkill)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.skills.push(newSkill)
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 const removeSkill = (index: number) => {
-  props.cv.data.skills.splice(index, 1)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.skills.splice(index, 1)
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 const addCustomSection = () => {
@@ -142,14 +144,14 @@ const addCustomSection = () => {
     title: props.lang === 'es' ? 'Nueva Sección' : 'New Section',
     items: []
   }
-  props.cv.data.customSections.push(newSection)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.customSections.push(newSection)
+  cv.value.updatedAt = new Date().toISOString()
   activeSection.value = `custom-${sectionId}`
 }
 
 const removeCustomSection = (index: number) => {
-  props.cv.data.customSections.splice(index, 1)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.data.customSections.splice(index, 1)
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 const addCustomSectionItem = (section: CustomSection) => {
@@ -160,13 +162,36 @@ const addCustomSectionItem = (section: CustomSection) => {
     description: ''
   }
   section.items.push(newItem)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.updatedAt = new Date().toISOString()
   expandedItems.value[newItem.id] = true
 }
 
 const removeCustomSectionItem = (section: CustomSection, index: number) => {
   section.items.splice(index, 1)
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.updatedAt = new Date().toISOString()
+}
+
+const triggerAvatarUpload = () => {
+  avatarFileInput.value?.click()
+}
+
+const handleAvatarFile = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    cv.value.data.personalInfo.avatarUrl = (e.target?.result as string) || ''
+    updateTimestamp()
+  }
+  reader.readAsDataURL(file)
+  target.value = ''
+}
+
+const removeAvatar = () => {
+  cv.value.data.personalInfo.avatarUrl = ''
+  updateTimestamp()
 }
 
 // Predefined HSL color swatches
@@ -182,13 +207,15 @@ const themeSwatches = [
 ]
 
 const updateTimestamp = () => {
-  props.cv.updatedAt = new Date().toISOString()
+  cv.value.updatedAt = new Date().toISOString()
 }
 
 // Bilingual UI Dictionary
 const t = computed(() => {
   if (props.lang === 'es') {
     return {
+      cvTitleLabel: 'Título del Proyecto CV',
+      cvTitlePlaceholder: 'ej. CV Desarrollador Frontend',
       tabContent: 'Contenido del CV',
       tabDesign: 'Estilos y Temas',
       sectLayout: 'Diseño de Plantilla',
@@ -212,7 +239,10 @@ const t = computed(() => {
       personalInfo: 'Información Personal',
       fullName: 'Nombre Completo',
       jobTitle: 'Título Profesional',
-      avatarUrl: 'URL de Imagen de Perfil',
+      avatarUrl: 'Foto de Perfil',
+      avatarUrlPlaceholder: 'https://...',
+      btnUploadPhoto: 'Subir Foto',
+      btnRemovePhoto: 'Quitar',
       email: 'Correo Electrónico',
       phone: 'Teléfono',
       location: 'Ubicación / Ciudad',
@@ -269,10 +299,15 @@ const t = computed(() => {
       customTitle: 'Título de la Sección',
       customLabel: 'Título del Elemento',
       customSubtitle: 'Subtítulo del Elemento',
-      customDesc: 'Descripción breve'
+      customDesc: 'Descripción breve',
+      moveUp: 'Mover Arriba',
+      moveDown: 'Mover Abajo',
+      delete: 'Eliminar'
     }
   } else {
     return {
+      cvTitleLabel: 'CV Project Title',
+      cvTitlePlaceholder: 'e.g. Senior Frontend Engineer',
       tabContent: 'CV Content',
       tabDesign: 'Styles & Themes',
       sectLayout: 'Resume Template Layout',
@@ -296,7 +331,10 @@ const t = computed(() => {
       personalInfo: 'Personal Information',
       fullName: 'Full Name',
       jobTitle: 'Job Title',
-      avatarUrl: 'Profile Image URL',
+      avatarUrl: 'Profile Photo',
+      avatarUrlPlaceholder: 'https://...',
+      btnUploadPhoto: 'Upload Photo',
+      btnRemovePhoto: 'Remove',
       email: 'Email',
       phone: 'Phone',
       location: 'Location',
@@ -353,7 +391,10 @@ const t = computed(() => {
       customTitle: 'Section Title',
       customLabel: 'Item Title',
       customSubtitle: 'Item Subtitle',
-      customDesc: 'Brief Description'
+      customDesc: 'Brief Description',
+      moveUp: 'Move Up',
+      moveDown: 'Move Down',
+      delete: 'Delete'
     }
   }
 })
@@ -361,6 +402,24 @@ const t = computed(() => {
 
 <template>
   <div class="editor-sidebar">
+    <!-- Project Title Editor Header -->
+    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--bg-panel);">
+      <div class="form-group" style="gap: 0.25rem;">
+        <label class="form-label" for="cv-project-title-input" style="display: flex; align-items: center; gap: 0.35rem;">
+          <FileText :size="13" style="color: var(--primary)" /> {{ t.cvTitleLabel }}
+        </label>
+        <input 
+          id="cv-project-title-input"
+          type="text" 
+          class="form-input" 
+          v-model="cv.title" 
+          @input="updateTimestamp" 
+          :placeholder="t.cvTitlePlaceholder"
+          style="font-weight: 600; font-size: 0.95rem; background: var(--bg-app);"
+        />
+      </div>
+    </div>
+
     <!-- Sub-tab headers -->
     <div class="editor-tabs">
       <button 
@@ -410,8 +469,12 @@ const t = computed(() => {
             <div class="form-group" style="gap: 0.75rem;">
               <div 
                 class="font-option font-outfit" 
+                role="button"
+                :tabindex="0"
                 :class="{ active: cv.design.fontFamily === 'outfit' }"
                 @click="cv.design.fontFamily = 'outfit'; updateTimestamp()"
+                @keydown.enter.prevent="cv.design.fontFamily = 'outfit'; updateTimestamp()"
+                @keydown.space.prevent="cv.design.fontFamily = 'outfit'; updateTimestamp()"
               >
                 <div>
                   <strong>Outfit</strong>
@@ -421,8 +484,12 @@ const t = computed(() => {
               </div>
               <div 
                 class="font-option font-inter" 
+                role="button"
+                :tabindex="0"
                 :class="{ active: cv.design.fontFamily === 'inter' }"
                 @click="cv.design.fontFamily = 'inter'; updateTimestamp()"
+                @keydown.enter.prevent="cv.design.fontFamily = 'inter'; updateTimestamp()"
+                @keydown.space.prevent="cv.design.fontFamily = 'inter'; updateTimestamp()"
               >
                 <div>
                   <strong>Inter</strong>
@@ -432,8 +499,12 @@ const t = computed(() => {
               </div>
               <div 
                 class="font-option font-playfair" 
+                role="button"
+                :tabindex="0"
                 :class="{ active: cv.design.fontFamily === 'playfair' }"
                 @click="cv.design.fontFamily = 'playfair'; updateTimestamp()"
+                @keydown.enter.prevent="cv.design.fontFamily = 'playfair'; updateTimestamp()"
+                @keydown.space.prevent="cv.design.fontFamily = 'playfair'; updateTimestamp()"
               >
                 <div>
                   <strong>Playfair Display</strong>
@@ -458,10 +529,15 @@ const t = computed(() => {
                   v-for="swatch in themeSwatches" 
                   :key="swatch.hue" 
                   class="color-swatch"
+                  role="button"
+                  :tabindex="0"
+                  :aria-label="swatch.name"
                   :style="{ backgroundColor: swatch.color }"
                   :class="{ active: cv.design.themeColor === swatch.hue }"
                   :title="swatch.name"
                   @click="cv.design.themeColor = swatch.hue; updateTimestamp()"
+                  @keydown.enter.prevent="cv.design.themeColor = swatch.hue; updateTimestamp()"
+                  @keydown.space.prevent="cv.design.themeColor = swatch.hue; updateTimestamp()"
                 />
               </div>
             </div>
@@ -508,7 +584,41 @@ const t = computed(() => {
               </div>
               <div class="form-group">
                 <label class="form-label">{{ t.avatarUrl }}</label>
-                <input type="text" class="form-input" v-model="cv.data.personalInfo.avatarUrl" @input="updateTimestamp" placeholder="https://unsplash.com/..." />
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    v-model="cv.data.personalInfo.avatarUrl" 
+                    @input="updateTimestamp" 
+                    :placeholder="t.avatarUrlPlaceholder" 
+                  />
+                  <button 
+                    type="button" 
+                    class="btn btn-secondary" 
+                    style="padding: 0.6rem 0.75rem; white-space: nowrap; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;"
+                    :title="t.btnUploadPhoto"
+                    @click="triggerAvatarUpload"
+                  >
+                    <Upload :size="14" />
+                  </button>
+                  <button 
+                    v-if="cv.data.personalInfo.avatarUrl"
+                    type="button" 
+                    class="btn btn-secondary" 
+                    style="padding: 0.6rem 0.65rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"
+                    :title="t.btnRemovePhoto"
+                    @click="removeAvatar"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                  <input 
+                    type="file" 
+                    ref="avatarFileInput" 
+                    accept="image/*" 
+                    style="display: none;" 
+                    @change="handleAvatarFile" 
+                  />
+                </div>
               </div>
             </div>
             <div class="form-group-row">

@@ -1,10 +1,6 @@
 # ⚡ Veloce CV Builder — Premium CV & Portfolio Builder
 
-<div align="center">
-  <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=800&q=80" alt="Veloce CV Builder Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px; max-height: 250px; object-fit: cover;" />
-</div>
-
-**Veloce CV Builder** is an interactive, premium, high-fidelity web platform designed to let you build, customize, and maintain professional CV drafts locally, quickly, and visually. Built with **Vue 3**, **TypeScript**, and **Vite**, and powered by **Bun**.
+**Veloce CV Builder** is an interactive, premium, high-fidelity web platform designed to let you build, customize, and maintain professional CV drafts locally, quickly, and visually. Built with **Vue 3**.
 
 The builder delivers a gorgeous split-screen visual playground: edit forms on the left in an elegant, glassmorphic dark theme, and watch the changes render in real-time on the right inside templates mathematically formatted for perfect A4 page print layouts.
 
@@ -77,6 +73,7 @@ src/
 │   └── CvPreview.vue      # Dynamic template container and print frame
 ├── types.ts               # Rigid TypeScript interfaces for CV schema
 ├── mockData.ts            # Prefilled Senior Frontend Engineer profile mock data
+├── utils.ts               # Normalization, schema fallback, clone, export & date formatting helpers
 ├── main.ts                # Application entrypoint importing assets
 └── App.vue                # Root orchestrator, local storage sync, & language states
 ```

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { CvProject } from '../types'
+import { normalizeCv } from '../utils'
 import { 
   Plus, 
   Upload, 
@@ -107,26 +108,27 @@ const handleJsonImport = (event: Event) => {
   const reader = new FileReader()
   reader.onload = (e) => {
     try {
-      const parsed = JSON.parse(e.target?.result as string) as CvProject
-      // Simple validation
-      if (parsed && parsed.id && parsed.data && parsed.design) {
-        emit('import', parsed)
+      const parsed = JSON.parse(e.target?.result as string) as Partial<CvProject>
+      // Validate object and normalize
+      if (parsed && typeof parsed === 'object' && (parsed.data || parsed.design || parsed.title)) {
+        const validatedCv = normalizeCv(parsed)
+        emit('import', validatedCv)
         importError.value = ''
       } else {
         importError.value = t.value.errorInvalid
       }
-    } catch (err) {
+    } catch {
       importError.value = t.value.errorParse
     }
   }
   reader.readAsText(file)
-  // reset file input
   target.value = ''
 }
 
 const formatDate = (dateStr: string) => {
   try {
     const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
     return d.toLocaleDateString(props.lang === 'es' ? 'es-ES' : 'en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -134,7 +136,7 @@ const formatDate = (dateStr: string) => {
       hour: '2-digit',
       minute: '2-digit'
     })
-  } catch (e) {
+  } catch {
     return dateStr
   }
 }
@@ -205,14 +207,14 @@ const formatDate = (dateStr: string) => {
 
         <div class="cv-card-actions">
           <div class="cv-card-actions-left">
-            <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" @click="emit('select', cv.id)">
+            <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" :aria-label="t.btnEdit + ' ' + cv.title" @click="emit('select', cv.id)">
               <Edit3 :size="14" /> {{ t.btnEdit }}
             </button>
-            <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" :title="t.btnClone" @click="emit('clone', cv.id)">
+            <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" :title="t.btnClone" :aria-label="t.btnClone + ' ' + cv.title" @click="emit('clone', cv.id)">
               <Copy :size="14" /> {{ t.btnClone }}
             </button>
           </div>
-          <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: transparent; border: 1px solid var(--border); color: #ef4444;" :title="props.lang === 'es' ? 'Eliminar CV' : 'Delete CV'" @click="emit('delete', cv.id)">
+          <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: transparent; border: 1px solid var(--border); color: #ef4444;" :title="props.lang === 'es' ? 'Eliminar CV' : 'Delete CV'" :aria-label="(props.lang === 'es' ? 'Eliminar CV ' : 'Delete CV ') + cv.title" @click="emit('delete', cv.id)">
             <Trash2 :size="14" />
           </button>
         </div>
@@ -237,21 +239,29 @@ const formatDate = (dateStr: string) => {
     </div>
 
     <!-- Create New CV Modal -->
-    <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
+    <div 
+      v-if="showCreateModal" 
+      class="modal-overlay" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-cv-title"
+      @click.self="showCreateModal = false"
+    >
       <div class="modal-content">
         <div class="modal-header">
-          <h3 class="modal-title">{{ t.modalTitle }}</h3>
+          <h3 id="modal-cv-title" class="modal-title">{{ t.modalTitle }}</h3>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">{{ t.modalLabel }}</label>
+            <label class="form-label" for="new-cv-title-input">{{ t.modalLabel }}</label>
             <input 
+              id="new-cv-title-input"
               type="text" 
               class="form-input" 
               :placeholder="t.modalPlaceholder" 
               v-model="newCvTitle"
               @keyup.enter="handleCreate"
-              autoFocus
+              autofocus
             />
           </div>
         </div>
