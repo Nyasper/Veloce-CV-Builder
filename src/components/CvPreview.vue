@@ -245,7 +245,7 @@ const t = computed(() => {
           </div>
 
           <!-- Skills grouped in Sidebar -->
-          <div v-if="cv.data.skills.length > 0" class="cv-section" style="margin-top: 1rem;">
+          <div v-if="cv.data.skills.length > 0" class="cv-section">
             <h2>{{ t.skills }}</h2>
             <div v-for="(skills, category) in groupedSkills" :key="category" style="margin-bottom: 0.75rem;">
               <div style="font-size: 0.75rem; font-weight: 700; color: var(--cv-primary); margin-bottom: 0.25rem;">
@@ -585,7 +585,7 @@ const t = computed(() => {
           </div>
 
           <!-- Left Grid Column: Experience -->
-          <div v-if="cv.data.experience.length > 0" class="cv-section" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div v-if="cv.data.experience.length > 0" class="cv-section creative-item-list">
             <h2>{{ t.career }}</h2>
             <div v-for="exp in cv.data.experience" :key="exp.id" class="cv-item">
               <div class="cv-item-header">{{ exp.position || 'Position' }}</div>
@@ -597,9 +597,9 @@ const t = computed(() => {
           </div>
 
           <!-- Right Grid Column: Education & Skills -->
-          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <div class="creative-column">
             <!-- Education -->
-            <div v-if="cv.data.education.length > 0" class="cv-section" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div v-if="cv.data.education.length > 0" class="cv-section creative-item-list">
               <h2>{{ t.studies }}</h2>
               <div v-for="edu in cv.data.education" :key="edu.id" class="cv-item">
                 <div class="cv-item-header">{{ edu.degree || 'Degree' }}{{ edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : '' }}</div>
@@ -622,7 +622,7 @@ const t = computed(() => {
           </div>
 
           <!-- Projects (Full Width in Grid) -->
-          <div v-if="cv.data.projects.length > 0" class="span-full cv-section" style="margin-top: 0.5rem;">
+          <div v-if="cv.data.projects.length > 0" class="span-full cv-section">
             <h2>{{ t.featured }}</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
               <div v-for="proj in cv.data.projects" :key="proj.id" class="cv-item" style="border: 1px solid var(--cv-border); padding: 1rem; border-radius: var(--radius-sm);">
